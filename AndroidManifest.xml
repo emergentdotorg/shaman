@@ -47,11 +47,6 @@
         >
     </activity>
 
-    <activity android:name=".TabListActivity" android:label="Tab Activity"
-              android:theme="@android:style/Theme.NoTitleBar"
-        >
-    </activity>
-
     <activity android:name=".syncadapter.LoginActivity"
               android:label="@string/ui_activity_title"
               android:excludeFromRecents="true"

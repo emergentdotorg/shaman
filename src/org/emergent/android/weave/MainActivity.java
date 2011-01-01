@@ -61,6 +61,7 @@ public class MainActivity extends TabActivity {
   protected void onResume() {
     super.onResume();
     if (!readInstanceState(this)) setInitialState();
+    AbstractListActivity.requestSync(this);
   }
 
   @Override

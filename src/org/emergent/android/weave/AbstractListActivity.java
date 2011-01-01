@@ -26,7 +26,10 @@ import org.emergent.android.weave.syncadapter.SyncAssistant;
 import org.emergent.android.weave.util.Dbg;
 
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -41,7 +44,7 @@ public abstract class AbstractListActivity extends ListActivity {
   protected EditText m_filterEdit = null;
   protected SimpleCursorAdapter m_adapter = null;
 
-  private final AtomicReference<AsyncTask<WeaveAccountInfo, Integer, Throwable>> m_syncThread =
+  private static final AtomicReference<AsyncTask<WeaveAccountInfo, Integer, Throwable>> sm_syncThread =
       new AtomicReference<AsyncTask<WeaveAccountInfo, Integer, Throwable>>();
 
   protected TextWatcher m_filterEditWatcher = new TextWatcher() {
@@ -118,6 +121,7 @@ public abstract class AbstractListActivity extends ListActivity {
       boolean updateSaved = editor.commit();
       String msg = String.format("updateSaved : '%s'", updateSaved);
       Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+      requestSync();
     }
     if (requestCode == EDIT_ACCOUNT_LOGIN_REQUEST && resultCode != RESULT_OK) {
       Toast.makeText(this, "update cancelled", Toast.LENGTH_LONG).show();
@@ -139,17 +143,40 @@ public abstract class AbstractListActivity extends ListActivity {
   }
 
   private void requestSync() {
-    Intent intent = new Intent();
-    DobbyUtil.loginPrefsToIntent(DobbyUtil.getApplicationPreferences(this), intent);
-    WeaveAccountInfo loginInfo = DobbyUtil.intentToLogin(intent);
+    requestSync(this);
+  }
+
+  static void requestSync(final Context context) {
+    WeaveAccountInfo loginInfo = null;
+
+    try {
+      Intent intent = new Intent();
+      DobbyUtil.loginPrefsToIntent(DobbyUtil.getApplicationPreferences(context), intent);
+      loginInfo = DobbyUtil.intentToLogin(intent);
+    } catch (Exception e) {
+      Log.d(TAG, e.getMessage(), e);
+    }
+
+    if (loginInfo == null)
+      return;
+
+    Toast.makeText(context, "starting sync", Toast.LENGTH_LONG).show();
+
 
     AsyncTask<WeaveAccountInfo, Integer, Throwable> aTask = new AsyncTask<WeaveAccountInfo, Integer, Throwable>() {
       @Override
       protected Throwable doInBackground(WeaveAccountInfo... accountInfos) {
         WeaveAccountInfo accountInfo = accountInfos[0];
         try {
-          SyncAssistant syncAssistant = createSyncAssistant();
-          syncAssistant.doQueryAndUpdate(accountInfo.toAuthToken());
+
+          final Set<SyncAssistant> syncAssistants = new HashSet<SyncAssistant>(Arrays.asList(
+              new SyncAssistant(context, Bookmarks.UPDATER),
+              new SyncAssistant(context, Passwords.UPDATER)
+          ));
+
+          for (SyncAssistant syncAssistant : syncAssistants) {
+            syncAssistant.doQueryAndUpdate(accountInfo.toAuthToken());
+          }
         } catch (Throwable e) {
           Log.e(TAG, e.getMessage(), e);
           return e;
@@ -163,15 +190,15 @@ public abstract class AbstractListActivity extends ListActivity {
 
       @Override
       protected void onPostExecute(Throwable e) {
-        m_syncThread.compareAndSet(this, null);
+        sm_syncThread.compareAndSet(this, null);
         if (e == null)
           return;
         String msg = String.format("sync failed : '%s'", e.getMessage());
-        Toast.makeText(AbstractListActivity.this, msg, Toast.LENGTH_LONG).show();
+        Toast.makeText(context, msg, Toast.LENGTH_LONG).show();
       }
     };
 
-    boolean cmpSetRetval = m_syncThread.compareAndSet(null, aTask);
+    boolean cmpSetRetval = sm_syncThread.compareAndSet(null, aTask);
     if (cmpSetRetval)
       aTask.execute(loginInfo);
   }
@@ -205,8 +232,6 @@ public abstract class AbstractListActivity extends ListActivity {
     m_filterEdit = (EditText) findViewById(R.id.search_box);
     m_filterEdit.addTextChangedListener(m_filterEditWatcher);
   }
-
-  protected abstract SyncAssistant createSyncAssistant();
 
   protected abstract SimpleCursorAdapter createCursorAdapter(FilterQueryProvider qfp);
 

@@ -74,11 +74,6 @@ public class BookmarkListActivity extends AbstractListActivity {
   }
 
   @Override
-  protected SyncAssistant createSyncAssistant() {
-    return new SyncAssistant(this, Bookmarks.UPDATER);
-  }
-
-  @Override
   protected SimpleCursorAdapter createCursorAdapter(FilterQueryProvider qfp) {
     String[] from = {Bookmarks.Columns.TITLE};
     int[] to = {R.id.textName};

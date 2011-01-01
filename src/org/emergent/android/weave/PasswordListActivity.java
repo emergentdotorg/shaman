@@ -72,11 +72,6 @@ public class PasswordListActivity extends AbstractListActivity {
   }
 
   @Override
-  protected SyncAssistant createSyncAssistant() {
-    return new SyncAssistant(this, Passwords.UPDATER);
-  }
-
-  @Override
   protected SimpleCursorAdapter createCursorAdapter(FilterQueryProvider qfp) {
     String[] from = {Passwords.Columns.HOSTNAME, Passwords.Columns.USERNAME};
     int[] to = {R.id.textName, R.id.textValue};
