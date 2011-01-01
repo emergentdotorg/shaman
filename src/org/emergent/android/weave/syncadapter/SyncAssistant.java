@@ -46,6 +46,10 @@ public class SyncAssistant {
     m_syncCache = new SyncCache(m_context);
   }
 
+  public void reset() {
+    m_syncCache.reset();
+  }
+
   public int doQueryAndUpdate(String authToken) throws Exception {
     WeaveAccountInfo loginInfo = NetworkUtilities.createWeaveAccountInfo(authToken);
     UserWeave userWeave = NetworkUtilities.createUserWeave(loginInfo, m_context);
@@ -90,9 +94,11 @@ public class SyncAssistant {
   private Date getLastModified(UserWeave userWeave, String name) throws WeaveException {
     try {
       JSONObject infoCol = userWeave.getNode(UserWeave.HashNode.INFO_COLLECTIONS).getValue();
-//        Log.w(TAG, "infoCol (" + name + ") : " + infoCol.toString(2));
+        Log.w(TAG, "infoCol (" + name + ") : " + infoCol.toString(2));
       if (infoCol.has(name)) {
-        return new Date(infoCol.getLong(name));
+        long modLong = infoCol.getLong(name);
+//        Log.w(TAG, "modLong (" + name + ") : " + modLong);
+        return new Date(modLong * 1000);
 //          double lastMod = infoCol.getDouble(name);
 //          return WeaveUtil.toModifiedTimeDate(lastMod);
       }

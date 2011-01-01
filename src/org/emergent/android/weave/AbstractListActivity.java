@@ -251,6 +251,19 @@ public abstract class AbstractListActivity extends ListActivity {
     ContentResolver resolver = getContentResolver();
     Passwords.UPDATER.deleteRecords(resolver);
     Bookmarks.UPDATER.deleteRecords(resolver);
+    try {
+
+      final Set<SyncAssistant> syncAssistants = new HashSet<SyncAssistant>(Arrays.asList(
+          new SyncAssistant(this, Bookmarks.UPDATER),
+          new SyncAssistant(this, Passwords.UPDATER)
+      ));
+
+      for (SyncAssistant syncAssistant : syncAssistants) {
+        syncAssistant.reset();
+      }
+    } catch (Throwable e) {
+      Log.e(TAG, e.getMessage(), e);
+    }
   }
 
   protected void showMyDialog(String title, String msg) {

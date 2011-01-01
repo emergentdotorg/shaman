@@ -139,6 +139,21 @@ class SyncCache {
     }
   }
 
+  public void reset() {
+    SQLiteDatabase db = null;
+    try {
+      db = m_helper.getWritableDatabase();
+      int count = db.delete(KEY_HASH_TABLE_NAME, null, null);
+      count += db.delete(META_GLOBAL_TABLE_NAME, null, null);
+      Log.d(TAG, "SyncCacheKeyManager.reset() : count = " + count);
+    } finally {
+      if (db != null) try {
+        db.close();
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
   /**
    * @param queryResult the resulte of querying the meta/global node
    * @return false if caches must be expired
