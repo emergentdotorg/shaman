@@ -45,7 +45,7 @@ public class PasswordListActivity extends AbstractListActivity {
 
 
     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//      @Override
+      @Override
       public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
         Cursor cursor = (Cursor)m_adapter.getItem(position);
         String pword = cursor.getString(cursor.getColumnIndex(Columns.PASSWORD));
@@ -57,8 +57,9 @@ public class PasswordListActivity extends AbstractListActivity {
       }
     });
 
+/*
     listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
-//      @Override
+      @Override
       public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
         Context context = view.getContext();
         Log.v(TAG, "context match: " + (PasswordListActivity.this == context));
@@ -68,6 +69,7 @@ public class PasswordListActivity extends AbstractListActivity {
         return false;
       }
     });
+*/
 
   }
 

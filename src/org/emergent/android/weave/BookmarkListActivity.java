@@ -28,8 +28,12 @@ import android.util.Log;
 import android.view.View;
 import android.widget.*;
 import org.emergent.android.weave.persistence.Bookmarks;
+import org.emergent.android.weave.persistence.Weaves;
 import org.emergent.android.weave.syncadapter.SyncAssistant;
 import org.emergent.android.weave.util.Dbg;
+
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  * @author Patrick Woodworth
@@ -38,28 +42,41 @@ public class BookmarkListActivity extends AbstractListActivity {
 
   private static final String TAG = Dbg.getTag(BookmarkListActivity.class);
 
-  /**
-   * Called when the activity is first created.
-   */
+  private final LinkedList<String> m_parentStack = new LinkedList<String>();
+
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.bookmark_list);
     setupAdapter();
-//    final ListView listView = (ListView)findViewById(R.id.listView);
     final ListView listView = this.getListView();
 
     listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
       @Override
       public void onItemClick(AdapterView<?> a, View v, int position, long id) {
         Cursor cursor = (Cursor)m_adapter.getItem(position);
-        String uri = cursor.getString(cursor.getColumnIndex(Bookmarks.Columns.BMK_URI));
-        Log.v(TAG, "launching " + uri);
-        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
-        startActivity(intent);
+        String msg;
+        String type = cursor.getString(cursor.getColumnIndex(Bookmarks.Columns.TYPE));
+//        msg = String.format("type : '%s'", type);
+//        Toast.makeText(BookmarkListActivity.this, msg, Toast.LENGTH_LONG).show();
+        if ("folder".equals(type)) {
+          String uuid = cursor.getString(cursor.getColumnIndex(Bookmarks.Columns.UUID));
+//          msg = String.format("uuid : '%s'", uuid);
+//          Toast.makeText(BookmarkListActivity.this, msg, Toast.LENGTH_LONG).show();
+          synchronized (m_parentStack) {
+            m_parentStack.addFirst(uuid);
+          }
+          validateFilter();
+        } else {
+          String uri = cursor.getString(cursor.getColumnIndex(Bookmarks.Columns.BMK_URI));
+          Log.v(TAG, "launching " + uri);
+          Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(uri));
+          startActivity(intent);
+        }
       }
     });
 
+/*
     listView.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
       @Override
       public boolean onItemLongClick(AdapterView<?> adapterView, View view, int position, long id) {
@@ -71,12 +88,28 @@ public class BookmarkListActivity extends AbstractListActivity {
         return false;
       }
     });
+*/
+  }
+
+  @Override
+  protected void onPause() {
+    super.onPause();
+  }
+
+  public void onBackPressed() {
+    synchronized (m_parentStack) {
+      if (m_parentStack.poll() == null) {
+        super.onBackPressed();
+      } else {
+        validateFilter();
+      }
+    }
   }
 
   @Override
   protected SimpleCursorAdapter createCursorAdapter(FilterQueryProvider qfp) {
-    String[] from = {Bookmarks.Columns.TITLE};
-    int[] to = {R.id.textName};
+    String[] from = {Bookmarks.Columns.TITLE, Bookmarks.Columns.BMK_URI};
+    int[] to = {R.id.bmkRowLine1, R.id.bmkRowLine2};
     Cursor cursor = qfp.runQuery(null);
     return new MyCursorAdapter(this, R.layout.bookmark_row, cursor, from, to);
   }
@@ -84,15 +117,27 @@ public class BookmarkListActivity extends AbstractListActivity {
   @Override
   protected FilterQueryProvider getQueryFilterProvider(final ContentResolver cr) {
     return new FilterQueryProvider() {
-//      @Override
+      @Override
       public Cursor runQuery(CharSequence charSequence) {
         Cursor retval;
         String sort = Bookmarks.Columns.TITLE;
         String selection;
         String[] selectionArgs;
         if (TextUtils.isEmpty(charSequence)) {
-          selection = "" + Bookmarks.Columns.TYPE + " = ?";
-          selectionArgs = new String[]{"bookmark"};
+//          selection = "" + Bookmarks.Columns.TYPE + " = ?";
+//          selectionArgs = new String[]{"bookmark"};
+          selection = "" + Bookmarks.Columns.IS_DELETED + " = ?";
+          selection += " AND " + Bookmarks.Columns.TYPE + " != ?";
+          selection += " AND " + Bookmarks.Columns.TYPE + " != ?";
+          selection += " AND " + Bookmarks.Columns.TYPE + " != ?";
+          selection += " AND " + Bookmarks.Columns.PARENT_ID + " = ?";
+          String parentId = null;
+          synchronized (m_parentStack) {
+            parentId = m_parentStack.peek();
+          }
+          if (parentId == null)
+            parentId = "places";
+          selectionArgs = new String[]{"0", "livemark", "query", "separator", parentId};
         } else {
           selection = "(" + Bookmarks.Columns.TYPE + " = ?)";
           selection += " AND ((" + Bookmarks.Columns.TITLE + " LIKE ?)";

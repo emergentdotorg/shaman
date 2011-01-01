@@ -10,7 +10,9 @@
       android:layout_height="wrap_content"
       android:hint="type to filter"
       android:inputType="text"
-      android:maxLines="1"/>
+      android:maxLines="1"
+      android:visibility="gone"
+      />
   <ListView
       android:id="@+id/android:list"
       android:layout_width="fill_parent"

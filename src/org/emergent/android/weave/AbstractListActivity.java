@@ -46,6 +46,8 @@ public abstract class AbstractListActivity extends ListActivity {
   private static final AtomicReference<AsyncTask<WeaveAccountInfo, Integer, Throwable>> sm_syncThread =
       new AtomicReference<AsyncTask<WeaveAccountInfo, Integer, Throwable>>();
 
+  protected final AtomicReference<CharSequence> m_filterString = new AtomicReference<CharSequence>();
+
   protected TextWatcher m_filterEditWatcher = new TextWatcher() {
 
     public void afterTextChanged(Editable s) {
@@ -55,11 +57,16 @@ public abstract class AbstractListActivity extends ListActivity {
     }
 
     public void onTextChanged(CharSequence s, int start, int before, int count) {
-      if (m_adapter != null)
-        m_adapter.getFilter().filter(s);
+      m_filterString.set(s);
+      validateFilter();
     }
 
   };
+
+  protected void validateFilter() {
+    if (m_adapter != null)
+      m_adapter.getFilter().filter(m_filterString.get());
+  }
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -118,13 +125,13 @@ public abstract class AbstractListActivity extends ListActivity {
       SharedPreferences.Editor editor = appPrefs.edit();
       DobbyUtil.intentToLoginPrefs(editor, data);
       boolean updateSaved = editor.commit();
-      String msg = String.format("updateSaved : '%s'", updateSaved);
-      Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+//      String msg = String.format("updateSaved : '%s'", updateSaved);
+//      Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
       requestSync();
     }
-    if (requestCode == EDIT_ACCOUNT_LOGIN_REQUEST && resultCode != RESULT_OK) {
-      Toast.makeText(this, "update cancelled", Toast.LENGTH_LONG).show();
-    }
+//    if (requestCode == EDIT_ACCOUNT_LOGIN_REQUEST && resultCode != RESULT_OK) {
+//      Toast.makeText(this, "update cancelled", Toast.LENGTH_LONG).show();
+//    }
   }
 
   protected void launchPreferencesEditor() {
@@ -158,9 +165,6 @@ public abstract class AbstractListActivity extends ListActivity {
 
     if (loginInfo == null)
       return;
-
-    Toast.makeText(context, "starting sync", Toast.LENGTH_LONG).show();
-
 
     AsyncTask<WeaveAccountInfo, Integer, Throwable> aTask = new AsyncTask<WeaveAccountInfo, Integer, Throwable>() {
       @Override
@@ -198,8 +202,10 @@ public abstract class AbstractListActivity extends ListActivity {
     };
 
     boolean cmpSetRetval = sm_syncThread.compareAndSet(null, aTask);
-    if (cmpSetRetval)
+    if (cmpSetRetval) {
+      Toast.makeText(context, "starting sync", Toast.LENGTH_LONG).show();
       aTask.execute(loginInfo);
+    }
   }
 
 //  private static final int HELLO_ID = 1;
@@ -298,10 +304,14 @@ public abstract class AbstractListActivity extends ListActivity {
     private int layout;
 
     public MyCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to) {
+      this(new MyViewBinder(), context, layout, c, from, to);
+    }
+
+    public MyCursorAdapter(ViewBinder binder, Context context, int layout, Cursor c, String[] from, int[] to) {
       super(context, layout, c, from, to);
       this.context = context;
       this.layout = layout;
-      this.setViewBinder(new MyViewBinder());
+      this.setViewBinder(binder);
     }
 
     @Override
