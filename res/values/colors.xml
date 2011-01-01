@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <drawable name="even_stripe">#e5edfa</drawable>
+  <drawable name="odd_stripe">#ffffff</drawable>
+</resources>

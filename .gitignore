@@ -1,0 +1,11 @@
+/.idea/workspace.xml
+/bin/
+/gen/
+/out/
+/local.properties
+/target/
+/tests/gen/
+/tests/out/
+/tests/local.properties
+/xtras/target/
+*.iws

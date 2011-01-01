@@ -1,0 +1,23 @@
+ANDROID_LOG_TAGS='EmergentWeave:V *:E' adb logcat -v time
+
+adb push xtras/weave.properties /sdcard/weave.properties
+
+ANT_OPTS="-Dbuild.sysclasspath=ignore"
+
+adb shell am instrument -w org.emergent.android.weave.client.tests/android.test.InstrumentationTestRunner
+
+
+todo adjust permissions in manifest
+todo test security access to content providers
+todo fix default options
+todo setup resync trigger on app focus
+todo convenient option to wipe data?
+todo cleanup pref options (per user/app confusion)
+todo fix auth error handling
+todo cleanup naming of app/auth provider
+todo cleanup terminology and casing of dialogs to match FF
+todo fixup copyright
+
+
+Large Image from http://www.flickr.com/photos/myklroventine/2153212730/
+

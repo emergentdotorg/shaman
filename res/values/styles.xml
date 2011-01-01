@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <style name="FieldEdit" parent="@android:style/Widget.EditText">
+    <item name="android:textAppearance">?android:attr/textAppearanceSmallInverse</item>
+    <item name="android:layout_width">0dp</item>
+    <item name="android:layout_weight">1</item>
+    <item name="android:singleLine">true</item>
+    <item name="android:scrollHorizontally">true</item>
+  </style>
+  <style name="FieldLabel" parent="@android:style/Widget.TextView">
+    <item name="android:textAppearance">?android:attr/textAppearanceSmall</item>
+    <item name="android:padding">3dip</item>
+  </style>
+</resources>
