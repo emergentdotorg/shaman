@@ -95,6 +95,9 @@ public abstract class AbstractListActivity extends ListActivity {
       case R.id.account:
         launchAccountEditor();
         return true;
+      case R.id.reset:
+        wipeData();
+        return true;
       case R.id.resync:
         requestSync();
         return true;
@@ -199,7 +202,7 @@ public abstract class AbstractListActivity extends ListActivity {
     m_adapter.setFilterQueryProvider(qfp);
 //    listView.setAdapter(adapter);
     setListAdapter(m_adapter);
-    m_filterEdit = (EditText)findViewById(R.id.search_box);
+    m_filterEdit = (EditText) findViewById(R.id.search_box);
     m_filterEdit.addTextChangedListener(m_filterEditWatcher);
   }
 
@@ -213,11 +216,11 @@ public abstract class AbstractListActivity extends ListActivity {
 
     private final SimpleDateFormat m_dateFormat = new SimpleDateFormat();
 
-//    @Override
+    @Override
     public boolean setViewValue(View view, Cursor cursor, int columnIndex) {
       if (view instanceof TextView &&
           Weaves.Columns.LAST_MODIFIED.equals(cursor.getColumnName(columnIndex))) {
-        TextView tview = (TextView)view;
+        TextView tview = (TextView) view;
         long theDateLong = cursor.getLong(columnIndex);
         Date theDate = new Date(theDateLong * 1000);
 //        GregorianCalendar sm_gregorianCalendar = new GregorianCalendar();
@@ -243,8 +246,6 @@ public abstract class AbstractListActivity extends ListActivity {
       this.layout = layout;
       this.setViewBinder(new MyViewBinder());
     }
-
-
 
     @Override
     public int getStringConversionColumn() {

@@ -71,6 +71,9 @@
 
     <activity android:name=".syncadapter.AccountOptionsActivity"/>
 
+    <activity android:name=".EulaActivity" android:label="@string/eula_title">
+    </activity>
+
 <!--
     <activity android:name=".syncadapter.AuthenticatorActivity"
               android:label="@string/ui_activity_title"

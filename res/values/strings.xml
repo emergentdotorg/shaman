@@ -6,9 +6,12 @@
   <string name="account_label">Weave</string>
 
 
+  <string name="account_action">Account</string>
+  <string name="reset_action">Reset</string>
   <string name="resync_action">Resync</string>
   <string name="settings_action">Preferences</string>
-  <string name="account_action">Account</string>
+  
+
   <string name="ng_no_items">No items found to display</string>
 
   <string name="preferences">Settings</string>
@@ -132,5 +135,10 @@
   <string name="done_action">Done</string>
   <!-- Menu item/button name -->
   <string name="discard_action">Discard</string>
+
+  <!-- EULA -->
+  <string name="eula_title">Shaman EULA</string>
+  <string name="eula_accept">Accept</string>
+  <string name="eula_refuse">Cancel</string>
 
 </resources>

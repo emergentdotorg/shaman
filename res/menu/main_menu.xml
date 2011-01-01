@@ -13,4 +13,8 @@
         android:title="@string/account_action"
         android:icon="@drawable/ic_menu_manage"
       />
+  <item android:id="@+id/reset"
+        android:title="@string/reset_action"
+        android:icon="@drawable/ic_menu_manage"
+      />
 </menu>
