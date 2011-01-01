@@ -108,9 +108,9 @@ public abstract class AbstractListActivity extends ListActivity {
       case R.id.resync:
         requestSync();
         return true;
-      case R.id.settings:
-        launchPreferencesEditor();
-        return true;
+//      case R.id.settings:
+//        launchPreferencesEditor();
+//        return true;
       default:
         return super.onOptionsItemSelected(item);
     }

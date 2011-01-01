@@ -109,7 +109,7 @@
   <string name="profile_action">Weave profile</string>
   <string name="view_profile">View Profile</string>
 
-  <string name="appopts_activity_title">Dobby Application Preferences</string>
+  <string name="appopts_activity_title">Shaman Application Preferences</string>
   <string name="login_activity_custom_server_button">Use custom server</string>
 
   <string-array name="account_setup_login_server_optarray">
