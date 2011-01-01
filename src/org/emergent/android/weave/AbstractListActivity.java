@@ -1,7 +1,6 @@
 package org.emergent.android.weave;
 
-import android.app.AlertDialog;
-import android.app.ListActivity;
+import android.app.*;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -202,6 +201,39 @@ public abstract class AbstractListActivity extends ListActivity {
     if (cmpSetRetval)
       aTask.execute(loginInfo);
   }
+
+//  private static final int HELLO_ID = 1;
+//
+//  static void setNewMessageIndicator(Context context, int messageCount){
+//
+//    String ns = Context.NOTIFICATION_SERVICE;
+//    NotificationManager mNotificationManager = (NotificationManager) context.getSystemService(ns);
+//
+//    int icon = R.drawable.stat_sys_warning;
+//    CharSequence tickerText = "Hello";
+//    long when = System.currentTimeMillis();
+//
+//    Notification notification = new Notification(icon, tickerText, when);
+//
+////    Context context = getApplicationContext();
+//    CharSequence contentTitle = "My notification";
+//    CharSequence contentText = "Hello World!";
+//    Intent notificationIntent = new Intent(this, AbstractListActivity.class);
+//    PendingIntent contentIntent = PendingIntent.getActivity(context, 0, notificationIntent, 0);
+//
+//    notification.setLatestEventInfo(context, contentTitle, contentText, contentIntent);
+//
+//    mNotificationManager.notify(HELLO_ID, notification);
+//
+////   // If we're being called because a new message has been received,
+////   // then display an icon and a count. Otherwise, delete the persistent
+////   // message.
+////   if (messageCount > 0) {
+////      nm.notifyWithText(myApp.NOTIFICATION_GUID,      // ID for this notification.
+////                messageCount + " new message" + messageCount > 1 ? "s":"", // Text to display.
+////                NotificationManager.LENGTH_SHORT); // Show it for a short time only.
+//   }
+
 
   private void wipeData() {
     Log.w(TAG, "wipeData");
