@@ -109,9 +109,9 @@ public class BookmarkListActivity extends AbstractListActivity {
   @Override
   protected SimpleCursorAdapter createCursorAdapter(FilterQueryProvider qfp) {
     String[] from = {Bookmarks.Columns.TITLE, Bookmarks.Columns.BMK_URI};
-    int[] to = {R.id.bmkRowLine1, R.id.bmkRowLine2};
+    int[] to = {R.id.title, R.id.url};
     Cursor cursor = qfp.runQuery(null);
-    return new MyCursorAdapter(this, R.layout.bookmark_row, cursor, from, to);
+    return new MyCursorAdapter(this, R.layout.history_item, cursor, from, to);
   }
 
   @Override

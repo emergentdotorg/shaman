@@ -1,5 +1,7 @@
 package org.emergent.android.weave;
 
+import android.widget.BaseAdapter;
+
 /**
  * Resources for the distribution package.
  * RD = Resources Distribution

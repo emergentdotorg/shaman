@@ -1,6 +1,7 @@
 package org.emergent.android.weave;
 
-import android.app.*;
+import android.app.AlertDialog;
+import android.app.ListActivity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,10 +12,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
+import android.view.*;
 import android.widget.*;
 import org.emergent.android.weave.client.WeaveAccountInfo;
 import org.emergent.android.weave.persistence.Bookmarks;
@@ -152,7 +150,7 @@ public abstract class AbstractListActivity extends ListActivity {
     requestSync(this);
   }
 
-  static void requestSync(final Context context) {
+  static WeaveAccountInfo getLoginInfo(final Context context) {
     WeaveAccountInfo loginInfo = null;
 
     try {
@@ -162,7 +160,14 @@ public abstract class AbstractListActivity extends ListActivity {
     } catch (Exception e) {
       Log.d(TAG, e.getMessage(), e);
     }
+    return loginInfo;
+  }
 
+  static void requestSync(final Context context) {
+    requestSync(context, getLoginInfo(context));
+  }
+
+  static void requestSync(final Context context, WeaveAccountInfo loginInfo) {
     if (loginInfo == null)
       return;
 
@@ -300,8 +305,10 @@ public abstract class AbstractListActivity extends ListActivity {
 
   protected class MyCursorAdapter extends SimpleCursorAdapter {
 
-    private Context context;
+    private Context mContext;
     private int layout;
+    //    private Cursor mCursor;
+    private boolean mDataValid;
 
     public MyCursorAdapter(Context context, int layout, Cursor c, String[] from, int[] to) {
       this(new MyViewBinder(), context, layout, c, from, to);
@@ -309,9 +316,25 @@ public abstract class AbstractListActivity extends ListActivity {
 
     public MyCursorAdapter(ViewBinder binder, Context context, int layout, Cursor c, String[] from, int[] to) {
       super(context, layout, c, from, to);
-      this.context = context;
+//      this.mContext = context;
       this.layout = layout;
+//      this.mCursor = c;
       this.setViewBinder(binder);
+    }
+
+    protected void init(Context context, Cursor c, boolean autoRequery) {
+      super.init(context, c, autoRequery);
+      boolean cursorPresent = c != null;
+//        mAutoRequery = autoRequery;
+//        mCursor = c;
+      mDataValid = cursorPresent;
+      mContext = context;
+//        mRowIDColumn = cursorPresent ? c.getColumnIndexOrThrow("_id") : -1;
+//        mChangeObserver = new ChangeObserver();
+//        if (cursorPresent) {
+//            c.registerContentObserver(mChangeObserver);
+//            c.registerDataSetObserver(mDataSetObserver);
+//        }
     }
 
     @Override
@@ -328,6 +351,43 @@ public abstract class AbstractListActivity extends ListActivity {
     public Object getItem(int position) {
       return super.getItem(position);
     }
+
+    /**
+     * @see android.widget.ListAdapter#getView(int, View, ViewGroup)
+     */
+    public View getView(int position, View convertView, ViewGroup parent) {
+      if (!mDataValid) {
+        throw new IllegalStateException("this should only be called when the cursor is valid");
+      }
+      if (!getCursor().moveToPosition(position)) {
+        throw new IllegalStateException("couldn't move cursor to position " + position);
+      }
+      View v;
+      if (convertView == null) {
+        v = newView(mContext, getCursor(), parent);
+      } else {
+        v = convertView;
+      }
+      bindView(v, mContext, getCursor());
+
+      TextView urlTextView = (TextView)v.findViewById(R.id.url);
+      if (urlTextView != null) {
+        String urlVal = urlTextView.getText().toString();
+        if (urlVal == null || urlVal.trim().length() < 1) {
+          urlTextView.setVisibility(View.GONE);
+        } else {
+          urlTextView.setVisibility(View.VISIBLE);
+        }
+      }
+      View star = v.findViewById(R.id.star);
+      if (star != null)
+        star.setVisibility(View.GONE);
+      View favicon = v.findViewById(R.id.favicon);
+      if (favicon != null)
+        favicon.setVisibility(View.GONE);
+      return v;
+    }
+
   }
 
 }

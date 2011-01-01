@@ -8,6 +8,7 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.widget.TabHost;
 import android.widget.Toast;
+import org.emergent.android.weave.client.WeaveAccountInfo;
 
 /**
  * @author Patrick Woodworth
@@ -54,14 +55,19 @@ public class MainActivity extends TabActivity {
         .setIndicator("Debug", res.getDrawable(R.drawable.ic_tab_recent))
         .setContent(intent);
     tabHost.addTab(spec);
+
 */
+    WeaveAccountInfo loginInfo = AbstractListActivity.getLoginInfo(this);
+    if (loginInfo == null) {
+    } else {
+      AbstractListActivity.requestSync(this);
+    }
   }
 
   @Override
   protected void onResume() {
     super.onResume();
     if (!readInstanceState(this)) setInitialState();
-    AbstractListActivity.requestSync(this);
   }
 
   @Override
