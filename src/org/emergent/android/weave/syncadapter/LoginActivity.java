@@ -84,7 +84,7 @@ public class LoginActivity extends Activity
   private EditText m_passwordEdit;
   private EditText m_usernameEdit;
   private EditText m_secretEdit;
-  private CheckBox m_allcertsCheck;
+//  private CheckBox m_allcertsCheck;
 
   private int m_spinnerPos;
 
@@ -135,7 +135,7 @@ public class LoginActivity extends Activity
     m_usernameEdit = (EditText)findViewById(R.id.username_edit);
     m_passwordEdit = (EditText)findViewById(R.id.password_edit);
     m_secretEdit = (EditText)findViewById(R.id.secret_edit);
-    m_allcertsCheck = (CheckBox)findViewById(R.id.allcerts_checkbox);
+//    m_allcertsCheck = (CheckBox)findViewById(R.id.allcerts_checkbox);
 
     initWidgetsFromIntent(intent);
     m_message.setText(getMessage());
@@ -338,7 +338,7 @@ public class LoginActivity extends Activity
     initWidgetsFromIntent(this, R.id.username_edit, EXTRA_USERNAME, intent);
     initWidgetsFromIntent(this, R.id.password_edit, EXTRA_PASSWORD, intent);
     initWidgetsFromIntent(this, R.id.secret_edit, EXTRA_SECRET, intent);
-    initWidgetsFromIntent(this, R.id.allcerts_checkbox, EXTRA_ALLCERTS, intent);
+//    initWidgetsFromIntent(this, R.id.allcerts_checkbox, EXTRA_ALLCERTS, intent);
     updateSpinner();
   }
 
@@ -447,7 +447,7 @@ public class LoginActivity extends Activity
     String username = m_usernameEdit.getText().toString();
     String password = m_passwordEdit.getText().toString();
     String secret = m_secretEdit.getText().toString();
-    boolean allcerts = m_allcertsCheck.isChecked();
+    boolean allcerts = true; // m_allcertsCheck.isChecked();
     Log.w(TAG, String.format("Authenticating: %s : %s @ %s", username, password, serverUri));
     WeaveAccountInfo retval = createWeaveInfo(serverUri, username, password, secret);
     final SharedPreferences prefs = DobbyUtil.getAccountPreferences(LoginActivity.this, retval);
@@ -475,21 +475,5 @@ public class LoginActivity extends Activity
     return retval;
   }
 
-  private static class AuthResult {
-
-    public final boolean m_success;
-    public final WeaveAccountInfo m_info;
-    public final String m_message;
-    public final Throwable m_thrown;
-
-    public AuthResult(boolean success, WeaveAccountInfo info, String message, Throwable thrown) {
-      m_success = success;
-      m_info = info;
-      m_message = message;
-      m_thrown = thrown;
-      if (m_success && (m_info == null))
-        Log.w(TAG, "AuthenticatorActivity$AuthResult.AuthResult() : success is true but info is null");
-    }
-  }
 }
 
