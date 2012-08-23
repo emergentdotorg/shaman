@@ -39,6 +39,8 @@ public class WeaveConstants {
 
   static final int UNAUTHORIZED_HTTP_STATUS_CODE = 401;
 
+  static final int NOT_FOUND_HTTP_STATUS_CODE = 404;
+
   public static final boolean ALLOW_INVALID_CERTS_DEFAULT = true; // todo this should be false
 
   static final boolean CONNECTION_POOL_ENABLED_DEFAULT = true;

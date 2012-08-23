@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="war" name="plumber:war">
+    <output-path>$PROJECT_DIR$/plumber/target</output-path>
+    <root id="archive" name="plumber.war">
+      <element id="artifact" artifact-name="plumber:war exploded" />
+    </root>
+  </artifact>
+</component>

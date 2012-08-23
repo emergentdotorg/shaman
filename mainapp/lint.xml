@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+  <issue id="ContentDescription" severity="ignore"/>
+  <issue id="Deprecated" severity="ignore"/>
+  <issue id="HardcodedText" severity="ignore"/>
+  <issue id="IconMissingDensityFolder" severity="ignore"/>
+  <issue id="InefficientWeight" severity="ignore"/>
+  <issue id="NewApi">
+  </issue>
+  <issue id="Proguard" severity="ignore"/>
+  <issue id="PxUsage" severity="ignore"/>
+  <issue id="ScrollViewSize" severity="ignore"/>
+  <issue id="SdCardPath">
+    <ignore path="src/org/emergent/android/weave/Constants.java"/>
+  </issue>
+  <issue id="TextFields" severity="ignore"/>
+  <issue id="UnusedResources">
+    <ignore path="res/values/colors.xml"/>
+  </issue>
+  <issue id="UselessLeaf" severity="ignore"/>
+</lint>

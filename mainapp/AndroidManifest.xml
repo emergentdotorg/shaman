@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="org.emergent.android.weave"
+          android:versionName="1.1.0" android:versionCode="4">
+
+  <!-- History:
+  1.0.0 [1]: 2011-01-01
+  1.1.0 [4]: 2012-08-03
+  -->
+
+  <uses-sdk android:targetSdkVersion="16" android:minSdkVersion="11"/>
+  <supports-screens android:normalScreens="true" android:smallScreens="true" android:largeScreens="true"/>
+
+  <uses-permission android:name="android.permission.INTERNET"/>
+
+  <application android:label="@string/app_name"
+               android:icon="@drawable/ic_launcher"
+               android:allowClearUserData="true"
+      >
+
+    <activity android:name=".MainActivity"
+              android:label="@string/app_name"
+        >
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <activity android:name=".BookmarkListActivity" android:label="Bookmark Activity"
+        >
+    </activity>
+
+    <activity android:name=".PasswordListActivity" android:label="Password Activity"
+        >
+    </activity>
+
+    <activity android:name=".syncadapter.LoginActivity"
+              android:label="@string/ui_activity_title"
+              android:excludeFromRecents="true"
+        >
+    </activity>
+
+    <activity android:name=".ApplicationOptionsActivity"
+              android:label="@string/appopts_activity_title"/>
+
+    <activity android:name=".BookmarkEditActivity"
+              android:theme="@android:style/Theme.NoTitleBar"
+        />
+
+    <activity android:name=".PasswordEditActivity"
+              android:theme="@android:style/Theme.NoTitleBar"
+        />
+
+    <activity android:name=".AboutActivity"
+              android:label="@string/about_title"
+              android:excludeFromRecents="true"
+        >
+    </activity>
+
+    <provider android:name=".persistence.BookmarkContentProvider"
+              android:label="@string/bookmark_provider_label"
+              android:authorities="org.emergent.android.weave.bookmarkcontentprovider"
+              android:exported="false"
+              android:syncable="true"
+        />
+
+    <provider android:name=".persistence.PasswordContentProvider"
+              android:label="@string/password_provider_label"
+              android:authorities="org.emergent.android.weave.passwordcontentprovider"
+              android:exported="false"
+              android:syncable="true"
+        />
+
+  </application>
+
+</manifest>

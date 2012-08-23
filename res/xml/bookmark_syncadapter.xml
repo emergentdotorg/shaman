@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!-- This XML file provide configuration information for the BookmarkSyncAdapter. -->
-<sync-adapter xmlns:android="http://schemas.android.com/apk/res/android"
-    android:contentAuthority="org.emergent.android.weave.bookmarkcontentprovider"
-    android:accountType="org.emergent.android.weave"
-    android:supportsUploading="false"
-/>

@@ -6,7 +6,7 @@
     <option name="METHOD_NAME" value="" />
     <option name="CLASS_NAME" value="org.emergent.android.weave.client.tests.UserWeaveTest" />
     <option name="PACKAGE_NAME" value="" />
-    <option name="CHOOSE_DEVICE_MANUALLY" value="false" />
+    <option name="TARGET_SELECTION_MODE" value="EMULATOR" />
     <option name="PREFERRED_AVD" value="" />
     <option name="COMMAND_LINE" value="" />
     <option name="WIPE_USER_DATA" value="false" />

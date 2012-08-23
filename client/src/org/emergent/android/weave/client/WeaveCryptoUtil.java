@@ -91,13 +91,25 @@ class WeaveCryptoUtil {
     return cipher.doFinal(ciphertextbytes);
   }
 
-  public byte[] decrypt(Key secKey, Key hmacKey, String ciphertext, String iv, String hmac) throws GeneralSecurityException {
+  public String decrypt(Key secKey, Key hmacKey, String ciphertext, String iv, String hmac) throws GeneralSecurityException {
     checkMac(hmacKey, ciphertext, hmac);
     byte[] ciphertextbytes = Base64.decode(ciphertext);
     byte[] ivBytes = Base64.decode(iv);
     Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
     cipher.init(Cipher.DECRYPT_MODE, secKey, new IvParameterSpec(ivBytes));
-    return cipher.doFinal(ciphertextbytes);
+//    System.err.println("lengths : "  + " iv=" + ivBytes.length + " ivstr=" + iv.length() + " ; hmacstr=" + hmac.length());
+    return WeaveUtil.toUtf8String(cipher.doFinal(ciphertextbytes));
+  }
+
+  public String encrypt(Key secKey, Key hmacKey, String plaintext, String iv) throws GeneralSecurityException {
+//    byte[] ivBytes = new byte[16];
+//    mSecureRandom.nextBytes(ivBytes);
+    byte[] ivBytes = Base64.decode(iv);
+    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
+    cipher.init(Cipher.ENCRYPT_MODE, secKey, new IvParameterSpec(ivBytes));
+    byte[] plaintextbytes = WeaveUtil.toUtf8Bytes(plaintext);
+    byte[] ciphertextbytes = cipher.doFinal(plaintextbytes);
+    return WeaveUtil.toAsciiString(Base64.encode(ciphertextbytes));
   }
 
   public Key unwrapSecretKey(RSAPrivateKey privKey, String wrapped) throws GeneralSecurityException {
@@ -123,7 +135,7 @@ class WeaveCryptoUtil {
     return cipher.doFinal(plaintext);
   }
 
-  private String createMac(Key secKey, String ciphertext) throws GeneralSecurityException {
+  String createMac(Key secKey, String ciphertext) throws GeneralSecurityException {
     Mac mac = Mac.getInstance("HMACSHA256", PROVIDER_NAME);
 //    mac.init(new SecretKeySpec(Base64.encode(secKey.getEncoded()), "AES"));
     mac.init(secKey);
@@ -131,7 +143,7 @@ class WeaveCryptoUtil {
     return WeaveUtil.toAsciiString(Hex.encode(hmacBytes));
   }
 
-  private void checkMac(Key secKey, String ciphertext, String hmac) throws GeneralSecurityException {
+  void checkMac(Key secKey, String ciphertext, String hmac) throws GeneralSecurityException {
     String hmac2 = createMac(secKey, ciphertext);
     if (!hmac.equalsIgnoreCase(hmac2))
       throw new GeneralSecurityException("mac failed");

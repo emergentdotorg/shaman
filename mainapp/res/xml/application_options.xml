@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android">
+  <PreferenceCategory
+      android:title="@string/preferences"
+      >
+    <CheckBoxPreference
+        android:key="sync_on_open"
+        android:title="@string/pref_sync_on_open_title"
+        android:summary="@string/pref_sync_on_open_summary"
+        android:defaultValue="@bool/pref_sync_on_open_default"
+        />
+    <CheckBoxPreference
+        android:title="@string/pref_accept_invalid_certs_title"
+        android:summary="@string/pref_accept_invalid_certs_summary"
+        android:defaultValue="@bool/pref_accept_invalid_certs_default"
+        />
+    <EditTextPreference
+        android:key="server_url"
+        android:title="@string/pref_server_url_title"
+        android:summary="@string/pref_server_url_summary"
+        android:defaultValue="@string/pref_server_url_default"
+        android:inputType="textNoSuggestions"
+        />
+    <EditTextPreference
+        android:key="authAccount"
+        android:title="@string/pref_username_title"
+        android:summary="@string/pref_username_summary"
+        android:inputType="textNoSuggestions"
+        />
+    <EditTextPreference
+        android:key="password"
+        android:title="@string/pref_password_title"
+        android:summary="@string/pref_password_summary"
+        android:password="true"
+        />
+    <EditTextPreference
+        android:key="sync_key"
+        android:title="@string/pref_sync_key_title"
+        android:summary="@string/pref_sync_key_summary"
+        android:inputType="textNoSuggestions"
+        />
+  </PreferenceCategory>
+</PreferenceScreen>

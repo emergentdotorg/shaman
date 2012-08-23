@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
-    android:accountType="org.emergent.android.weave"
-    android:icon="@drawable/ic_launcher"
-    android:smallIcon="@drawable/ic_launcher"
-    android:label="@string/account_label"
-    android:accountPreferences="@xml/account_preferences"
-/>

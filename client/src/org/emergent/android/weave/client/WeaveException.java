@@ -18,6 +18,8 @@ package org.emergent.android.weave.client;
 
 import org.apache.http.client.HttpResponseException;
 
+import java.security.GeneralSecurityException;
+
 /**
  * @author Patrick Woodworth
  */
@@ -43,7 +45,7 @@ public class WeaveException extends Exception {
   }
 
   public WeaveException(Throwable cause) {
-    this(WeaveException.ExceptionType.GENERAL, cause);
+    this(getExceptionType(cause), cause);
   }
 
   public WeaveException(WeaveException.ExceptionType type, Throwable cause) {
@@ -52,7 +54,7 @@ public class WeaveException extends Exception {
   }
 
   public WeaveException(String message, Throwable cause) {
-    this(WeaveException.ExceptionType.GENERAL, message, cause);
+    this(getExceptionType(cause), message, cause);
   }
 
   public WeaveException(WeaveException.ExceptionType type, String message, Throwable cause) {
@@ -71,8 +73,27 @@ public class WeaveException extends Exception {
     return false;
   }
 
+  private static ExceptionType getExceptionType(Throwable cause) {
+    if (cause instanceof WeaveTransport.WeaveResponseException) {
+      WeaveTransport.WeaveResponseException e = (WeaveTransport.WeaveResponseException)cause;
+      if (isAuthFailure(e)) {
+        return ExceptionType.UNAUTHORIZED;
+      }
+      if (e.getStatusCode() == WeaveConstants.NOT_FOUND_HTTP_STATUS_CODE) {
+        return ExceptionType.NOTFOUND;
+      }
+    }
+    if (cause instanceof GeneralSecurityException) {
+      return ExceptionType.CRYPTO;
+    }
+    return ExceptionType.GENERAL;
+  }
+
   public enum ExceptionType {
     GENERAL,
+    NOTFOUND,
+    UNAUTHORIZED,
+    CRYPTO,
     BACKOFF,
     ;
   }

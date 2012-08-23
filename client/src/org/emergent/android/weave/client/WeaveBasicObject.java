@@ -78,12 +78,15 @@ public class WeaveBasicObject {
     return new JSONObject(m_nodeObj.getString("payload"));
   }
 
-  public JSONObject getEncryptedPayload(UserWeave weave, char[] secret)
-      throws JSONException, IOException, GeneralSecurityException, WeaveException {
-    WeaveEncryptedObject weo = new WeaveEncryptedObject(getPayload());
-    byte[] syncKey = Base32.decodeModified(new String(secret)); // todo don't convert to string
-    BulkKeyCouplet bulkKeyPair = weave.getBulkKeyPair(syncKey);
-    return weo.decryptObject(bulkKeyPair);
+  public JSONObject getEncryptedPayload(UserWeave weave, char[] secret) throws JSONException, IOException, WeaveException {
+    try {
+      WeaveEncryptedObject weo = new WeaveEncryptedObject(getPayload());
+      byte[] syncKey = Base32.decodeModified(new String(secret)); // todo don't convert to string
+      BulkKeyCouplet bulkKeyPair = weave.getBulkKeyPair(syncKey);
+      return weo.decryptObject(bulkKeyPair);
+    } catch (GeneralSecurityException e) {
+      throw new WeaveException(e);
+    }
   }
 
   public JSONObject getEncryptedPayload(Key bulkKey, Key hmacKey)
@@ -125,8 +128,8 @@ public class WeaveBasicObject {
     }
 
     public JSONObject decryptObject(Key key, Key hmacKey) throws GeneralSecurityException, JSONException {
-      byte[] bytes = WeaveCryptoUtil.getInstance().decrypt(key, hmacKey, getCiphertext(), getIv(), getHmac());
-      return new JSONObject(WeaveUtil.toUtf8String(bytes));
+      String plaintext = WeaveCryptoUtil.getInstance().decrypt(key, hmacKey, getCiphertext(), getIv(), getHmac());
+      return new JSONObject(plaintext);
     }
   }
 }

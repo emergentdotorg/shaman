@@ -1,21 +1,21 @@
 package org.emergent.android.weave.client;
 
+import org.apache.http.Header;
+import org.apache.http.entity.StringEntity;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
-import java.security.Key;
 import java.security.interfaces.RSAPublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class UserWeave {
+public class UserWeave implements SlimWeave {
 
   public enum HashNode {
     INFO_COLLECTIONS(false, "/info/collections"),
@@ -32,6 +32,7 @@ public class UserWeave {
   }
 
   public enum CollectionNode {
+    STORAGE_CLIENTS("clients"),
     STORAGE_BOOKMARKS("bookmarks"),
     STORAGE_PASSWORDS("passwords"),
     ;
@@ -102,7 +103,9 @@ public class UserWeave {
   }
 
   public void authenticate() throws WeaveException {
-    JSONObject jsonObj = getNode(HashNode.INFO_COLLECTIONS).getValue();
+    JSONObject jsonObj;
+    jsonObj = getNode(HashNode.INFO_COLLECTIONS).getValue();
+    jsonObj = getNode(HashNode.META_GLOBAL).getValue();
     jsonObj.has("foo");
   }
 
@@ -116,6 +119,34 @@ public class UserWeave {
           ? buildUserUriFromSubpath(node.nodePath)
           : buildSyncUriFromSubpath(node.nodePath);
       WeaveResponse result = getNode(nodeUri);
+      dumpResponse(result);
+      String body = result.getBody();
+      JSONObject obj = null;
+      if (!"[]".equals(body))
+        obj = new JSONObject(body);
+      return new QueryResult<JSONObject>(result, obj);
+    } catch (JSONException e) {
+      throw new WeaveException(e);
+    }
+  }
+
+  public WeaveResponse putNode(String node, String body) throws WeaveException {
+//    try {
+      URI nodeUri = buildUserUriFromSubpath(node);
+      WeaveResponse result = putNode(nodeUri, body);
+      dumpResponse(result);
+//      return new QueryResult<JSONObject>(result, new JSONObject(result.getBody()));
+      return result;
+//    } catch (JSONException e) {
+//      throw new WeaveException(e);
+//    }
+  }
+
+  public QueryResult<JSONObject> postNode(CollectionNode node, String body) throws WeaveException {
+    try {
+      URI nodeUri = buildSyncUriFromSubpath(node.nodePath);
+      WeaveResponse result = postNode(nodeUri, body);
+      dumpResponse(result);
       return new QueryResult<JSONObject>(result, new JSONObject(result.getBody()));
     } catch (JSONException e) {
       throw new WeaveException(e);
@@ -125,6 +156,7 @@ public class UserWeave {
   public QueryResult<List<WeaveBasicObject>> getWboCollection(URI uri) throws WeaveException {
     try {
       WeaveResponse response = getNode(uri);
+      dumpResponse(response);
       QueryResult<List<WeaveBasicObject>> result = new QueryResult<List<WeaveBasicObject>>(response);
       JSONArray jsonPassArray = new JSONArray(response.getBody());
       List<WeaveBasicObject> records = new ArrayList<WeaveBasicObject>();
@@ -178,29 +210,37 @@ public class UserWeave {
 
   protected BulkKeyCouplet getBulkKeyPair(byte[] syncKey) throws GeneralSecurityException, WeaveException {
     try {
-      byte[] keyBytes = WeaveCryptoUtil.deriveSyncKey(syncKey, getLegalUsername());
-      Key bulkKey = new SecretKeySpec(keyBytes, "AES");
 
-      byte[] hmkeyBytes = WeaveCryptoUtil.deriveSyncHmacKey(syncKey, keyBytes, getLegalUsername());
-      Key hmbulkKey = new SecretKeySpec(hmkeyBytes, "AES");
+      JSONObject cryptoKeysPayload = getCryptoKeys();
 
-      JSONObject ckwbojsonobj = getCryptoKeys();
+      String legalUsername = getLegalUsername();
 
-      WeaveBasicObject.WeaveEncryptedObject weo = new WeaveBasicObject.WeaveEncryptedObject(ckwbojsonobj);
-      JSONObject ckencPayload = weo.decryptObject(bulkKey, hmbulkKey);
+      return WeaveUtil.buildBulkKeyPair(legalUsername, syncKey, cryptoKeysPayload);
 
-      JSONArray jsonArray = ckencPayload.getJSONArray("default");
-      String bkey2str = jsonArray.getString(0);
-      String bhmac2str = jsonArray.getString(1);
-      byte[] bkey2bytes = Base64.decode(bkey2str);
 
-      Key bulkKey2 = new SecretKeySpec(bkey2bytes, "AES");
-
-      byte[] bhmac2bytes = Base64.decode(bhmac2str);
-
-      Key bulkHmacKey2 = new SecretKeySpec(bhmac2bytes, "AES");
-
-      return new BulkKeyCouplet(bulkKey2, bulkHmacKey2);
+//      byte[] keyBytes = WeaveCryptoUtil.deriveSyncKey(syncKey, getLegalUsername());
+//      Key bulkKey = new SecretKeySpec(keyBytes, "AES");
+//
+//      byte[] hmkeyBytes = WeaveCryptoUtil.deriveSyncHmacKey(syncKey, keyBytes, getLegalUsername());
+//      Key hmbulkKey = new SecretKeySpec(hmkeyBytes, "AES");
+//
+//      JSONObject ckwbojsonobj = getCryptoKeys();
+//
+//      WeaveBasicObject.WeaveEncryptedObject weo = new WeaveBasicObject.WeaveEncryptedObject(ckwbojsonobj);
+//      JSONObject ckencPayload = weo.decryptObject(bulkKey, hmbulkKey);
+//
+//      JSONArray jsonArray = ckencPayload.getJSONArray("default");
+//      String bkey2str = jsonArray.getString(0);
+//      String bhmac2str = jsonArray.getString(1);
+//      byte[] bkey2bytes = Base64.decode(bkey2str);
+//
+//      Key bulkKey2 = new SecretKeySpec(bkey2bytes, "AES");
+//
+//      byte[] bhmac2bytes = Base64.decode(bhmac2str);
+//
+//      Key bulkHmacKey2 = new SecretKeySpec(bhmac2bytes, "AES");
+//
+//      return new BulkKeyCouplet(bulkKey2, bulkHmacKey2);
     } catch (JSONException e) {
       throw new WeaveException(e);
     }
@@ -209,7 +249,9 @@ public class UserWeave {
   protected JSONObject getCryptoKeys() throws WeaveException {
     try {
       URI nodeUri = buildSyncUriFromSubpath("/storage/crypto/keys");
-      WeaveBasicObject nodeObj = new WeaveBasicObject(nodeUri, new JSONObject(getNode(nodeUri).getBody()));
+      WeaveResponse response = getNode(nodeUri);
+      dumpResponse(response);
+      WeaveBasicObject nodeObj = new WeaveBasicObject(nodeUri, new JSONObject(response.getBody()));
       return nodeObj.getPayload();
     } catch (JSONException e) {
       throw new WeaveException(e);
@@ -221,9 +263,35 @@ public class UserWeave {
     return getNode(nodeUri);
   }
 
-  protected final WeaveResponse getNode(URI nodeUri) throws WeaveException {
+  public final WeaveResponse getNode(URI nodeUri) throws WeaveException {
     try {
       return m_transport.execGetMethod(getLegalUsername(), m_password, nodeUri);
+    } catch (IOException e) {
+      throw new WeaveException(e);
+    }
+  }
+
+  public final WeaveResponse putNode(URI nodeUri, String body) throws WeaveException {
+    try {
+      StringEntity entity = new StringEntity(body);
+      return m_transport.execPutMethod(getLegalUsername(), m_password, nodeUri, entity);
+    } catch (IOException e) {
+      throw new WeaveException(e);
+    }
+  }
+
+  public final WeaveResponse postNode(URI nodeUri, String body) throws WeaveException {
+    try {
+      StringEntity entity = new StringEntity(body);
+      return m_transport.execPostMethod(getLegalUsername(), m_password, nodeUri, entity);
+    } catch (IOException e) {
+      throw new WeaveException(e);
+    }
+  }
+
+  public final WeaveResponse deleteNode(URI nodeUri) throws WeaveException {
+    try {
+      return m_transport.execDeleteMethod(getLegalUsername(), m_password, nodeUri);
     } catch (IOException e) {
       throw new WeaveException(e);
     }
@@ -264,5 +332,16 @@ public class UserWeave {
     }
     builder.appendEncodedPath(subpath);
     return builder.build();
+  }
+
+  private static void dumpResponse(WeaveResponse response) {
+    if (true)
+      return;
+    WeaveTransport.WeaveResponseHeaders headers = response.getResponseHeaders();
+    for (Header header : headers.getHeaders()) {
+      System.out.println("" + header.toString());
+    }
+    String body = response.getBody();
+    System.out.println(body);
   }
 }

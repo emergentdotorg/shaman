@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="shaman-custom" basedir=".">
+
+  <dirname property="shaman-custom.basedir" file="${ant.file.shaman-custom}"/>
+
+  <property file="${user.home}/.android/build.properties"/>
+
+  <target name="release" depends="clean,android_rules.release,lint"/>
+
+  <target name="lint" description="Run lint checks">
+    <exec executable="lint"
+          dir="${shaman-custom.basedir}"
+          failonerror="true"
+        >
+      <arg value="--exitcode"/>
+      <arg value="-Werror"/>
+      <arg value="."/>
+    </exec>
+  </target>
+
+  <target name="checkstyle-init" unless="checkstyle.on">
+    <property name="artifacts.dir" location="${shaman-custom.basedir}/target"/>
+    <available classname="com.puppycrawl.tools.checkstyle.CheckStyleTask" property="checkstyle.enabled"/>
+  </target>
+
+  <target name="checkstyle" if="checkstyle.enabled" depends="checkstyle-init">
+    <taskdef resource="checkstyletask.properties"/>
+    <mkdir dir="${artifacts.dir}/checkstyle"/>
+    <checkstyle config="${shaman-custom.basedir}/checkstyle/shaman-checks.xml">
+      <fileset dir="${shaman-custom.basedir}/src">
+        <include name="**/*.java"/>
+      </fileset>
+      <formatter type="plain"/>
+      <formatter type="xml" toFile="${artifacts.dir}/checkstyle/${project.name}-errors.xml"/>
+    </checkstyle>
+  </target>
+
+</project>

@@ -1,0 +1,27 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Context unpackWAR="false">
+
+  <!-- Default set of monitored resources -->
+  <WatchedResource>WEB-INF/web.xml</WatchedResource>
+
+  <!-- Uncomment this to disable session persistence across Tomcat restarts -->
+  <!--
+  -->
+  <Manager pathname=""/>
+
+  <!-- Uncomment this to enable Comet connection tacking (provides events
+on session expiration as well as webapp lifecycle) -->
+  <!--
+  <Valve className="org.apache.catalina.valves.CometConnectionManagerValve" />
+  -->
+
+  <Resource name="jdbc/weavedb"
+            type="javax.sql.DataSource" auth="Container"
+            description="Derby database for WeaveApp"
+            maxActive="50" maxIdle="10" maxWait="10000"
+            username="" password=""
+            factory="org.apache.commons.dbcp.BasicDataSourceFactory"
+            driverClassName="org.apache.derby.jdbc.EmbeddedDriver"
+            url="jdbc:derby:dbs/WeaveDB;create=true"/>
+
+</Context>

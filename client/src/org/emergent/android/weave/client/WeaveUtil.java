@@ -23,9 +23,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.UnsupportedEncodingException;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.*;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.security.GeneralSecurityException;
+import java.security.Key;
+import java.security.SecureRandom;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.util.Arrays;
 import java.util.Date;
 
@@ -37,9 +44,34 @@ public class WeaveUtil {
   private static final String JSON_STREAM_TYPE = "application/json";
   private static final String ENTITY_CHARSET_NAME = "UTF-8";
 
+  private static final SecureRandom sm_random = new SecureRandom();
+
   private WeaveUtil() {
     // no instantiation
   }
+
+  public static String legalizeUsername(String friendlyUsername) {
+    return WeaveCryptoUtil.getInstance().legalizeUsername(friendlyUsername);
+  }
+
+  public static String createEntryId() {
+//    try {
+//      MessageDigest digest = MessageDigest.getInstance("SHA1");
+      byte[] bytes = new byte[12];
+      synchronized (sm_random) {
+        sm_random.nextBytes(bytes);
+      }
+//      digest.update(bytes);
+      byte[] baseEncodedBytes = Base32.encode(bytes);
+      String retval = WeaveUtil.toAsciiString(baseEncodedBytes);
+//      if (retval.length() > 12)
+//        retval = retval.substring(0, 12);
+      return retval;
+//    } catch (GeneralSecurityException e) {
+//      throw new Error(e);
+//    }
+  }
+
 
   @SuppressWarnings({"ThrowableInstanceNeverThrown"})
   public static void checkNull(URI uri) {
@@ -168,6 +200,159 @@ public class WeaveUtil {
       return entity;
     } catch (UnsupportedEncodingException e) {
       throw new IllegalStateException(e);
+    }
+  }
+
+  public static BulkKeyCouplet buildBulkKeyPair(String legalUsername, byte[] syncKey, JSONObject cryptoKeysPayload)
+      throws GeneralSecurityException, WeaveException, JSONException {
+
+      byte[] keyBytes = WeaveCryptoUtil.deriveSyncKey(syncKey, legalUsername);
+      Key bulkKey = new SecretKeySpec(keyBytes, "AES");
+
+      byte[] hmkeyBytes = WeaveCryptoUtil.deriveSyncHmacKey(syncKey, keyBytes, legalUsername);
+      Key hmbulkKey = new SecretKeySpec(hmkeyBytes, "AES");
+
+      JSONObject ckencPayload = decryptWboPayload(bulkKey, hmbulkKey, cryptoKeysPayload);
+
+      JSONArray jsonArray = ckencPayload.getJSONArray("default");
+      String bkey2str = jsonArray.getString(0);
+      String bhmac2str = jsonArray.getString(1);
+      byte[] bkey2bytes = Base64.decode(bkey2str);
+
+      Key bulkKey2 = new SecretKeySpec(bkey2bytes, "AES");
+
+      byte[] bhmac2bytes = Base64.decode(bhmac2str);
+
+      Key bulkHmacKey2 = new SecretKeySpec(bhmac2bytes, "AES");
+
+      return new BulkKeyCouplet(bulkKey2, bulkHmacKey2);
+  }
+
+  public static JSONObject decryptWboPayload(Key bulkKey, Key hmbulkKey, JSONObject weoObj)
+      throws GeneralSecurityException, JSONException {
+
+    String weoCipherText =  weoObj.getString("ciphertext");
+    String weoIV = weoObj.getString("IV");
+    String weoHmac = weoObj.getString("hmac");
+
+    String plaintext = WeaveCryptoUtil.getInstance().decrypt(bulkKey, hmbulkKey, weoCipherText, weoIV, weoHmac);
+
+    return new JSONObject(plaintext);
+  }
+
+  public static JSONObject encryptWboPayload(Key bulkKey, Key hmbulkKey, JSONObject payload)
+      throws GeneralSecurityException, JSONException {
+
+    byte[] ivBytes = new byte[16];
+    sm_random.nextBytes(ivBytes);
+    String iv = toAsciiString(Base64.encode(ivBytes));
+
+    String plaintext = payload.toString();
+
+    WeaveCryptoUtil cryptoUtil = WeaveCryptoUtil.getInstance();
+    String ciphertext = cryptoUtil.encrypt(bulkKey, hmbulkKey, plaintext, iv);
+    String hmac = cryptoUtil.createMac(hmbulkKey, ciphertext);
+    cryptoUtil.checkMac(hmbulkKey, ciphertext, hmac);
+
+    JSONObject retval = new JSONObject();
+    retval.put("ciphertext", ciphertext);
+    retval.put("IV", iv);
+    retval.put("hmac", hmac);
+    return retval;
+  }
+
+  public static boolean isEmpty(String s) {
+    return (s == null || s.trim().length() == 0);
+  }
+
+  public static void close(InputStream closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(OutputStream closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Reader closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Writer closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Connection closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Statement closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(ResultSet closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static String readToString(File file) throws IOException {
+    BufferedReader is = null;
+    StringWriter os = null;
+    try {
+      is = new BufferedReader(new FileReader(file));
+      os = new StringWriter();
+      char[] buf = new char[512];
+      int read = 0;
+      while ((read = is.read(buf)) > -1) {
+        if (read == 0) {
+          Thread.yield();
+        } else {
+          os.write(buf, 0, read);
+        }
+      }
+      return os.toString();
+    } finally {
+      close(is);
+      close(os);
+    }
+  }
+
+
+  public static String readToString(InputStream is) throws IOException {
+    ByteArrayOutputStream os = null;
+    try {
+      os = new ByteArrayOutputStream();
+      byte[] buf = new byte[512];
+      int read = 0;
+      while ((read = is.read(buf)) > -1) {
+        if (read == 0) {
+          Thread.yield();
+        } else {
+          os.write(buf, 0, read);
+        }
+      }
+      return WeaveUtil.toUtf8String(os.toByteArray());
+    } finally {
+      close(os);
     }
   }
 

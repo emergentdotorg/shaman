@@ -16,3 +16,9 @@ todo cleanup pref options (per user/app confusion)
 todo fix auth error handling
 todo cleanup naming of app/auth provider
 todo cleanup terminology and casing of dialogs to match FF
+
+
+mvn android:help
+mvn android:deploy
+
+emulator shortcuts: http://developer.android.com/tools/help/emulator.html#KeyMapping
