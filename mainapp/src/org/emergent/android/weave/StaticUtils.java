@@ -109,7 +109,8 @@ public class StaticUtils implements Constants.Implementable {
     }
 
     Log.i(TAG, "Upgrade found!");
-    wipeDataImpl(context);
+    if (lastVersion < 5)
+      wipeDataImpl(context);
     SharedPreferences.Editor e = prefs.edit();
     if (firstVersion < 1) {
       e.putInt(PrefKey.firstVersionCode.name(), currentVersionCode);

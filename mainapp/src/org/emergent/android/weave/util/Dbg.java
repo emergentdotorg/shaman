@@ -14,7 +14,7 @@ public class Dbg {
   @SuppressWarnings("ConstantConditions")
   public static class Log {
 
-    private static final int SHAMAN_LOG_LEVEL = android.util.Log.VERBOSE;
+    private static final int SHAMAN_LOG_LEVEL = android.util.Log.WARN;
 
     public static void v(String tag, String msg) {
       if (android.util.Log.VERBOSE >= SHAMAN_LOG_LEVEL) android.util.Log.v(tag, msg);
