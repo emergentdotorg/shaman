@@ -15,20 +15,23 @@
  */
 package org.emergent.android.weave;
 
-import android.app.IntentService;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.Bundle;
-import android.os.Message;
-import android.os.Messenger;
-import org.emergent.android.weave.util.Dbg.Log;
 import org.emergent.android.weave.client.WeaveAccountInfo;
 import org.emergent.android.weave.client.WeaveException;
 import org.emergent.android.weave.persistence.Bookmarks;
 import org.emergent.android.weave.persistence.Passwords;
 import org.emergent.android.weave.syncadapter.SyncAssistant;
+import org.emergent.android.weave.util.Dbg.*;
+
+import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.content.ContentResolver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Resources;
+import android.os.Bundle;
+import android.os.Message;
+import android.os.Messenger;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -42,6 +45,8 @@ public class SyncService extends IntentService implements Constants.Implementabl
   public static final String INTENT_EXTRA_OP_KEY = "op";
   public static final int INTENT_EXTRA_SYNC_REQUEST = 1001;
   public static final int INTENT_EXTRA_RESET_REQUEST = 1002;
+
+  private static final int SYNC_RUNNING_NOTIFY_ID = 1;
 
   public SyncService() {
     super("WeaveSyncService");
@@ -67,21 +72,17 @@ public class SyncService extends IntentService implements Constants.Implementabl
   }
 
   private void onHandleSyncIntent(Intent intent) {
-    Uri data = intent.getData();
-
+//    Uri data = intent.getData();
     Messenger messenger = null;
     Bundle extras = intent.getExtras();
     if (extras != null) {
       messenger = (Messenger)extras.get(Constants.MESSENGER);
     }
 
-    sendMessage(messenger, SyncEventType.STARTED);
-
-//    Intent loginInfoIntent = intent.getParcelableExtra(Constants.LOGININFO);
-//    WeaveAccountInfo loginInfo = SyncManager.toLoginInfo(loginInfoIntent);
     WeaveAccountInfo loginInfo = StaticUtils.getLoginInfo(this);
     boolean success = false;
     try {
+      postSyncNotification();
       success = weaveUpdateSync(this, loginInfo);
       if (success) {
         sendMessage(messenger, SyncEventType.COMPLETED);
@@ -91,6 +92,8 @@ public class SyncService extends IntentService implements Constants.Implementabl
     } catch (Exception e) {
       Log.w(TAG, e);
       sendMessage(messenger, e);
+    } finally {
+      clearSyncNotification();
     }
   }
 
@@ -103,9 +106,7 @@ public class SyncService extends IntentService implements Constants.Implementabl
     }
   }
 
-
   public static void wipeDataImpl2(Context context) {
-    Log.w(TAG, "SyncService.wipeDataImpl2");
     try {
       SyncAssistant.resetCaches();
       ContentResolver resolver = context.getContentResolver();
@@ -132,6 +133,27 @@ public class SyncService extends IntentService implements Constants.Implementabl
     return true;
   }
 
+  private void postSyncNotification() {
+    Resources res = getResources();
+    Notification noti = new Notification.Builder(getApplicationContext())
+        .setContentTitle(res.getString(R.string.sync_notify_title))
+        .setContentText(res.getString(R.string.sync_notify_text))
+        .setSmallIcon(R.drawable.sync_anim)
+        .setTicker(res.getString(R.string.sync_notify_ticker))
+        .setOngoing(true)
+        .getNotification();
+
+    String ns = Context.NOTIFICATION_SERVICE;
+    NotificationManager mNotificationManager = (NotificationManager)getSystemService(ns);
+    mNotificationManager.notify(SYNC_RUNNING_NOTIFY_ID, noti);
+  }
+
+  private void clearSyncNotification() {
+    String ns = Context.NOTIFICATION_SERVICE;
+    NotificationManager mNotificationManager = (NotificationManager)getSystemService(ns);
+    mNotificationManager.cancel(SYNC_RUNNING_NOTIFY_ID);
+  }
+
   private void sendMessage(Messenger messenger, Throwable e) {
     SyncEventType type = getSyncStatusType(e);
     String text = String.format("%s : %s", e.getClass().getSimpleName(), e.getLocalizedMessage());
@@ -156,7 +178,7 @@ public class SyncService extends IntentService implements Constants.Implementabl
     }
   }
 
-  private SyncEventType getSyncStatusType(Throwable e) {
+  private static SyncEventType getSyncStatusType(Throwable e) {
     if (e != null) {
       if (e instanceof WeaveException) {
         switch (((WeaveException)e).getType()) {

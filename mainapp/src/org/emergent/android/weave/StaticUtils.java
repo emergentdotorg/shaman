@@ -244,5 +244,4 @@ public class StaticUtils implements Constants.Implementable {
     }
     activity.startService(intent);
   }
-
 }

@@ -1,6 +1,13 @@
 package org.emergent.android.weave;
 
-import android.app.*;
+import org.emergent.android.weave.client.WeaveAccountInfo;
+import org.emergent.android.weave.util.Dbg.*;
+import org.emergent.android.weave.util.FragmentTabListener;
+
+import android.app.ActionBar;
+import android.app.Activity;
+import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -8,15 +15,13 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import org.emergent.android.weave.util.Dbg.Log;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.emergent.android.weave.client.WeaveAccountInfo;
-import org.emergent.android.weave.util.FragmentTabListener;
 
 import java.lang.ref.WeakReference;
 
@@ -352,17 +357,8 @@ public class MainActivity extends Activity implements Constants.Implementable, F
   }
 
   private void setNotifyText(String msg) {
-    TextView notify_text = (TextView)findViewById(R.id.notify_text);
-    if (notify_text == null) {
-      Log.w(TAG, "notify_text was null!");
-      return;
-    }
-    if (msg == null || msg.trim().length() <= 0) {
-      msg = "";
-    }
-    notify_text.setText(msg);
-    int visibility = ("".equals(msg)) ? View.GONE : View.VISIBLE;
-    notify_text.setVisibility(visibility);
+    if (!TextUtils.isEmpty(msg))
+      Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
   }
 
   private static class MyHandler extends Handler {

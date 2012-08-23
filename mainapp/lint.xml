@@ -5,6 +5,10 @@
     <ignore path="src/org/emergent/android/weave/Constants.java"/>
   </issue>
   <issue id="UnusedResources">
+    <ignore path="res/drawable-hdpi-v11/stat_notify_error.png"/>
+    <ignore path="res/drawable-hdpi-v11/stat_notify_sync_error.png"/>
+    <ignore path="res/drawable-mdpi-v11/stat_notify_error.png"/>
+    <ignore path="res/drawable-mdpi-v11/stat_notify_sync_error.png"/>
     <ignore path="res/values/colors.xml"/>
   </issue>
 </lint>

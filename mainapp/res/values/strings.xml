@@ -101,4 +101,8 @@
 
   <string name="bookmark_icon_content_description">Bookmark Favicon</string>
 
+  <string name="sync_notify_title">Shaman Synchronizing</string>
+  <string name="sync_notify_text">Synchronization operation in progress.</string>
+  <string name="sync_notify_ticker">Synchronizing</string>
+
 </resources>

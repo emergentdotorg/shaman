@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.emergent.android.weave"
-          android:versionName="1.1.1" android:versionCode="5">
+          android:versionName="1.1.2" android:versionCode="6">
 
   <!-- History:
   1.0.0 [1]: 2011-01-01
   1.1.0 [4]: 2012-08-03
   1.1.1 [5]: 2012-08-22
+  1.1.2 [6]: unreleased
   -->
 
   <uses-sdk android:targetSdkVersion="16" android:minSdkVersion="11"/>
