@@ -18,7 +18,7 @@ package org.emergent.android.weave.syncadapter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import org.emergent.android.weave.DobbyUtil;
+import org.emergent.android.weave.StaticUtils;
 import org.emergent.android.weave.client.UserWeave;
 import org.emergent.android.weave.client.WeaveConstants;
 import org.emergent.android.weave.PrefKey;
@@ -37,8 +37,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Patrick Woodworth
  */
 class NetworkUtilities {
-
-  private static final String TAG = Dbg.getTag(NetworkUtilities.class);
 
   private static Map<Boolean, WeaveFactory> sm_factories = new ConcurrentHashMap<Boolean, WeaveFactory>();
 
@@ -65,7 +63,7 @@ class NetworkUtilities {
   }
 
   public static void authenticate(Context context, WeaveAccountInfo loginInfo) throws WeaveException, JSONException {
-    SyncCache syncCache = new SyncCache(context);
+//    SyncCache syncCache = SyncCache.getInstance();
 //    AbstractKeyManager keyMgr = syncCache.createKeyManager(createUserWeave(loginInfo, context), loginInfo.getSecret());
 //    keyMgr.authenticateSecret();
     UserWeave keyMgr = createUserWeave(loginInfo, context);
@@ -81,7 +79,7 @@ class NetworkUtilities {
   }
 
   private static boolean allowAllCerts(Context context, WeaveAccountInfo info) {
-    SharedPreferences prefs = DobbyUtil.getAccountPreferences(context, info);
+    SharedPreferences prefs = StaticUtils.getAccountPreferences(context, info);
     return prefs.getBoolean(PrefKey.allcerts.name(), WeaveConstants.ALLOW_INVALID_CERTS_DEFAULT);
   }
 }

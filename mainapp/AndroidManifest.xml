@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
           package="org.emergent.android.weave"
-          android:versionName="1.1.0" android:versionCode="4">
+          android:versionName="1.1.1" android:versionCode="5">
 
   <!-- History:
   1.0.0 [1]: 2011-01-01
   1.1.0 [4]: 2012-08-03
+  1.1.1 [5]: 2012-08-22
   -->
 
   <uses-sdk android:targetSdkVersion="16" android:minSdkVersion="11"/>
   <supports-screens android:normalScreens="true" android:smallScreens="true" android:largeScreens="true"/>
 
   <uses-permission android:name="android.permission.INTERNET"/>
+  <!--
+  <uses-permission android:name="android.permission.CLEAR_APP_CACHE"/>
+  -->
 
-  <application android:label="@string/app_name"
+  <application android:name=".ShamanApplication"
+               android:label="@string/app_name"
                android:icon="@drawable/ic_launcher"
                android:allowClearUserData="true"
       >
@@ -27,29 +32,14 @@
       </intent-filter>
     </activity>
 
-    <activity android:name=".BookmarkListActivity" android:label="Bookmark Activity"
-        >
-    </activity>
-
-    <activity android:name=".PasswordListActivity" android:label="Password Activity"
-        >
-    </activity>
-
     <activity android:name=".syncadapter.LoginActivity"
-              android:label="@string/ui_activity_title"
+              android:label="@string/login_activity_title"
               android:excludeFromRecents="true"
         >
     </activity>
 
     <activity android:name=".ApplicationOptionsActivity"
-              android:label="@string/appopts_activity_title"/>
-
-    <activity android:name=".BookmarkEditActivity"
-              android:theme="@android:style/Theme.NoTitleBar"
-        />
-
-    <activity android:name=".PasswordEditActivity"
-              android:theme="@android:style/Theme.NoTitleBar"
+              android:label="@string/appopts_activity_title"
         />
 
     <activity android:name=".AboutActivity"
@@ -70,6 +60,9 @@
               android:authorities="org.emergent.android.weave.passwordcontentprovider"
               android:exported="false"
               android:syncable="true"
+        />
+
+    <service android:name=".SyncService"
         />
 
   </application>

@@ -6,18 +6,15 @@ import android.content.Intent;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
+import org.emergent.android.weave.util.Dbg.Log;
 import android.view.View;
 import android.widget.TextView;
-import org.emergent.android.weave.util.Dbg;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-public class AboutActivity extends Activity {
-
-  private static final String TAG = Dbg.getTag(AboutActivity.class);
+public class AboutActivity extends Activity implements Constants.Implementable {
 
   @Override
   public void onCreate(Bundle icicle) {
@@ -28,7 +25,7 @@ public class AboutActivity extends Activity {
         finish();
       }
     });
-    String version = DobbyUtil.getApplicationVersioName(this);
+    String version = ShamanApplication.getApplicationVersionName();
     if (version != null) {
       TextView text = (TextView)findViewById(R.id.about_version_text_view);
       String vPrefix = getResources().getString(R.string.version);

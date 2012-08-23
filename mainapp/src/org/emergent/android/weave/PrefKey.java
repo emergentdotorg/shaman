@@ -34,6 +34,7 @@ public enum PrefKey {
   firstVersionCode, // int
   lastVersionCode, // int
   lastSync, // long
+  lastPrefSave, // long
   ;
 
   private final int m_prefDefaultId;

@@ -44,7 +44,9 @@
           <root url="file://$MODULE_DIR$/libs" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="file://$USER_HOME$/.local/android-sdk-linux/extras/android/support/v4/src/java" />
+        </SOURCES>
         <jarDirectory url="file://$MODULE_DIR$/libs" recursive="false" />
       </library>
     </orderEntry>

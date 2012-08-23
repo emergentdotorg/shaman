@@ -12,7 +12,7 @@
       >
     <LinearLayout
         android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dip"
         android:layout_weight="1"
         android:orientation="vertical"
         >
@@ -35,8 +35,6 @@
           android:layout_height="wrap_content"
           android:layout_width="fill_parent"
           android:scrollHorizontally="true"
-          android:capitalize="none"
-          android:autoText="false"
           android:visible="false"
           android:hint="@string/login_activity_server_hint"
           android:inputType="textUri"
@@ -47,8 +45,6 @@
           android:layout_height="wrap_content"
           android:layout_width="fill_parent"
           android:scrollHorizontally="true"
-          android:capitalize="none"
-          android:autoText="false"
           android:hint="@string/login_activity_username_hint"
           android:inputType="textEmailAddress"
           />
@@ -58,9 +54,6 @@
           android:layout_height="wrap_content"
           android:layout_width="fill_parent"
           android:scrollHorizontally="true"
-          android:capitalize="none"
-          android:autoText="false"
-          android:password="true"
           android:hint="@string/login_activity_password_hint"
           android:inputType="textPassword"
           />
@@ -70,8 +63,6 @@
           android:layout_height="wrap_content"
           android:layout_width="fill_parent"
           android:scrollHorizontally="true"
-          android:capitalize="none"
-          android:autoText="false"
           android:hint="@string/login_activity_secret_hint"
           android:inputType="textVisiblePassword"
           />
@@ -90,13 +81,12 @@
         >
       <Button
           android:id="@+id/test_button"
-          android:text="Test"
+          android:text="@string/cancel"
           android:layout_height="wrap_content"
           android:layout_width="wrap_content"
           android:minWidth="@dimen/button_minWidth"
           android:layout_alignParentLeft="true"
           android:layout_centerVertical="true"
-          android:visibility="gone"
           />
       <Button
           android:id="@+id/next_button"

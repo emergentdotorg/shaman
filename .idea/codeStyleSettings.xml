@@ -6,6 +6,25 @@
         <option name="LINE_SEPARATOR" value="&#10;" />
         <option name="FIELD_NAME_PREFIX" value="m_" />
         <option name="STATIC_FIELD_NAME_PREFIX" value="sm_" />
+        <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
+          <value>
+            <package name="java.awt" withSubpackages="false" static="false" />
+            <package name="org.emergent.android.weave.util.Dbg" withSubpackages="true" static="true" />
+            <package name="javax.swing" withSubpackages="false" static="false" />
+          </value>
+        </option>
+        <option name="IMPORT_LAYOUT_TABLE">
+          <value>
+            <package name="" withSubpackages="true" static="false" />
+            <emptyLine />
+            <package name="android" withSubpackages="true" static="false" />
+            <emptyLine />
+            <package name="javax" withSubpackages="true" static="false" />
+            <package name="java" withSubpackages="true" static="false" />
+            <emptyLine />
+            <package name="" withSubpackages="true" static="true" />
+          </value>
+        </option>
         <XML>
           <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
         </XML>
@@ -15,6 +34,7 @@
           </indentOptions>
         </codeStyleSettings>
         <codeStyleSettings language="JAVA">
+          <option name="BLANK_LINES_AFTER_CLASS_HEADER" value="1" />
           <option name="SPACE_AFTER_TYPE_CAST" value="false" />
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />

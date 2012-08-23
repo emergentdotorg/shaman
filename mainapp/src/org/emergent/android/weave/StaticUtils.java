@@ -18,34 +18,26 @@ package org.emergent.android.weave;
 
 import android.accounts.Account;
 import android.accounts.AccountManager;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
+import android.app.*;
+import android.content.*;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Messenger;
 import android.preference.PreferenceManager;
-import android.util.Log;
+import org.emergent.android.weave.util.Dbg.Log;
 import org.emergent.android.weave.client.WeaveAccountInfo;
-import org.emergent.android.weave.persistence.Bookmarks;
-import org.emergent.android.weave.persistence.Passwords;
-import org.emergent.android.weave.syncadapter.SyncAssistant;
-import org.emergent.android.weave.util.Dbg;
+import org.emergent.android.weave.syncadapter.LoginActivity;
 
 import java.net.URI;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Patrick Woodworth
  */
-public class DobbyUtil {
+public class StaticUtils implements Constants.Implementable {
 
-  private static final String TAG = Dbg.getTag(DobbyUtil.class);
-
-  private DobbyUtil() {
+  private StaticUtils() {
     // no instantiation
   }
 
@@ -109,40 +101,28 @@ public class DobbyUtil {
     SharedPreferences prefs = getApplicationPreferences(context);
     dumpPrefs(prefs);
 
-    int currentVersionCode = getApplicationVersionCode(context);
+    int currentVersionCode = ShamanApplication.getApplicationVersionCode();
     int firstVersion = PrefKey.firstVersionCode.getInt(prefs, 0);
     int lastVersion = PrefKey.lastVersionCode.getInt(prefs, 0);
     if (lastVersion == currentVersionCode) {
       return false;
     }
 
+    Log.i(TAG, "Upgrade found!");
     wipeDataImpl(context);
     SharedPreferences.Editor e = prefs.edit();
     if (firstVersion < 1) {
       e.putInt(PrefKey.firstVersionCode.name(), currentVersionCode);
     }
     e.putInt(PrefKey.lastVersionCode.name(), currentVersionCode);
-    return (e.commit());
-
+    boolean retval = (e.commit());
+    dumpPrefs(prefs);
+    return retval;
   }
 
   public static void wipeDataImpl(Context context) {
     Log.w(TAG, "wipeData");
-    ContentResolver resolver = context.getContentResolver();
-    Passwords.UPDATER.deleteRecords(resolver);
-    Bookmarks.UPDATER.deleteRecords(resolver);
-    try {
-      final Set<SyncAssistant> syncAssistants = new HashSet<SyncAssistant>(Arrays.asList(
-          new SyncAssistant(context, Bookmarks.UPDATER),
-          new SyncAssistant(context, Passwords.UPDATER)
-      ));
-
-      for (SyncAssistant syncAssistant : syncAssistants) {
-        syncAssistant.reset();
-      }
-    } catch (Throwable e) {
-      Log.e(TAG, e.getMessage(), e);
-    }
+    requestReset(context, null);
   }
 
   public static void dumpPrefs(SharedPreferences prefs) {
@@ -169,27 +149,100 @@ public class DobbyUtil {
     }
   }
 
-  public static int getApplicationVersionCode(Context context) {
-    int retval = 0;
+  static WeaveAccountInfo getLoginInfo(Context context) {
+    WeaveAccountInfo loginInfo = null;
     try {
-      String pkgName = context.getPackageName();
-      PackageInfo pInfo = context.getPackageManager().getPackageInfo(pkgName, 0);
-      retval = pInfo.versionCode;
-    } catch (PackageManager.NameNotFoundException e) {
-      Log.e(TAG, e.getLocalizedMessage(), e);
+      Intent intent = getLoginInfoIntent(context);
+      loginInfo = toLoginInfo(intent);
+    } catch (Exception e) {
+      Log.d(TAG, e.getMessage(), e);
     }
-    return retval;
+    return loginInfo;
   }
 
-  public static String getApplicationVersioName(Context context) {
-    String retval = null;
-    try {
-      String pkgName = context.getPackageName();
-      PackageInfo pInfo = context.getPackageManager().getPackageInfo(pkgName, 0);
-      retval = pInfo.versionName;
-    } catch (PackageManager.NameNotFoundException e) {
-      Log.e(TAG, e.getLocalizedMessage(), e);
-    }
-    return retval;
+  private static Intent getLoginInfoIntent(Context context) {
+    Intent intent = new Intent();
+    loginPrefsToIntent(getApplicationPreferences(context), intent);
+    return intent;
   }
+
+  private static WeaveAccountInfo toLoginInfo(Intent intent) {
+    WeaveAccountInfo loginInfo = null;
+    try {
+      loginInfo = intentToLogin(intent);
+    } catch (Exception e) {
+      Log.d(TAG, e.getMessage(), e);
+    }
+    return loginInfo;
+  }
+
+  public static boolean requestSync(Activity activity, Handler handler) {
+    WeaveAccountInfo loginInfo = getLoginInfo(activity);
+    if (loginInfo == null) {
+      launchLoginEditor(activity);
+    } else {
+      requestSync(activity, loginInfo, handler);
+    }
+    return true;
+  }
+
+  public static void launchHelp(Activity activity) {
+    Uri uriUrl = Uri.parse(activity.getResources().getString(R.string.help_url));
+    Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
+    activity.startActivity(intent);
+  }
+
+  public static void launchPreferencesEditor(Activity activity) {
+    Intent intent = new Intent();
+    intent.setClass(activity, ApplicationOptionsActivity.class);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+    activity.startActivity(intent);
+  }
+
+  public static void launchLoginEditor(Activity activity) {
+    Intent intent = new Intent();
+    intent.setClass(activity, LoginActivity.class);
+    loginPrefsToIntent(getApplicationPreferences(activity), intent);
+    activity.startActivityForResult(intent, Constants.EDIT_ACCOUNT_LOGIN_REQUEST_CODE);
+  }
+
+  public static void wipeData(final Activity activity) {
+    AlertDialog adb = (new AlertDialog.Builder(activity))
+        .setTitle(R.string.reset_confirm_title)
+        .setMessage(R.string.reset_confirm_message)
+        .setPositiveButton(R.string.reset, new DialogInterface.OnClickListener() {
+          @Override
+          public void onClick(DialogInterface dialog, int which) {
+            wipeDataImpl(activity);
+          }
+        })
+        .setNegativeButton(R.string.cancel, null)
+        .show();
+  }
+
+  public static void requestSync(Activity activity, WeaveAccountInfo loginInfo, Handler handler) {
+    if (loginInfo == null)
+      return;
+
+    Intent intent = new Intent(activity, SyncService.class);
+    intent.putExtra(SyncService.INTENT_EXTRA_OP_KEY, SyncService.INTENT_EXTRA_SYNC_REQUEST);
+    if (handler != null) {
+      // Create a new Messenger for the communication back
+      Messenger messenger = new Messenger(handler);
+      intent.putExtra(Constants.MESSENGER, messenger);
+    }
+    activity.startService(intent);
+  }
+
+  public static void requestReset(Context activity, Handler handler) {
+    Intent intent = new Intent(activity, SyncService.class);
+    intent.putExtra(SyncService.INTENT_EXTRA_OP_KEY, SyncService.INTENT_EXTRA_RESET_REQUEST);
+    if (handler != null) {
+      // Create a new Messenger for the communication back
+      Messenger messenger = new Messenger(handler);
+      intent.putExtra(Constants.MESSENGER, messenger);
+    }
+    activity.startService(intent);
+  }
+
 }

@@ -18,19 +18,16 @@ package org.emergent.android.weave.persistence;
 
 import android.content.ContentValues;
 import android.net.Uri;
-import android.util.Log;
+import org.emergent.android.weave.util.Dbg.Log;
 import org.emergent.android.weave.Constants;
 import org.emergent.android.weave.client.UserWeave;
-import org.emergent.android.weave.util.Dbg;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 /**
  * @author Patrick Woodworth
  */
-public class Bookmarks {
-
-  private static final String TAG = Dbg.getTag(Bookmarks.class);
+public class Bookmarks implements Constants.Implementable {
 
   public static final String AUTHORITY = Constants.BOOKMARK_PROVIDER_AUTHORITY;
 
@@ -67,7 +64,7 @@ public class Bookmarks {
         } catch (Exception ignored) {
         }
       }
-      Log.w(TAG, "tagval: " + tagval);
+      Log.v(TAG, "tagval: " + tagval);
       Weaves.putColumnValue(values, Columns.TAGS, tagval);
     }
   }

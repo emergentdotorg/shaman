@@ -17,7 +17,8 @@ package org.emergent.android.weave.syncadapter;
 
 import android.content.ContentResolver;
 import android.content.Context;
-import android.util.Log;
+import org.emergent.android.weave.util.Dbg.Log;
+import org.emergent.android.weave.Constants;
 import org.emergent.android.weave.client.*;
 import org.emergent.android.weave.persistence.Weaves;
 import org.emergent.android.weave.util.*;
@@ -32,52 +33,49 @@ import java.util.List;
 /**
 * @author Patrick Woodworth
 */
-public class SyncAssistant {
-
-  private static final String TAG = Dbg.getTag(SyncAssistant.class);
+public class SyncAssistant implements Constants.Implementable {
 
   private final Context m_context;
   private final Weaves.Updater m_updater;
-  private final SyncCache m_syncCache;
 
   public SyncAssistant(Context context, Weaves.Updater updater) {
     m_context = context;
     m_updater = updater;
-    m_syncCache = new SyncCache(m_context);
   }
 
-  public void reset() {
-    m_syncCache.reset();
+  public static void resetCaches() {
+    SyncCache.getInstance().reset();
   }
 
   public int doQueryAndUpdate(String authToken) throws Exception {
+    SyncCache syncCache = SyncCache.getInstance();
     WeaveAccountInfo loginInfo = NetworkUtilities.createWeaveAccountInfo(authToken);
     UserWeave userWeave = NetworkUtilities.createUserWeave(loginInfo, m_context);
     QueryResult<JSONObject> metaGlobal = userWeave.getNode(UserWeave.HashNode.META_GLOBAL);
     ContentResolver resolver = m_context.getContentResolver();
-    Date lastSyncDate = m_syncCache.validateMetaGlobal(metaGlobal, m_updater.getEngineName());
+    Date lastSyncDate = syncCache.validateMetaGlobal(metaGlobal, m_updater.getEngineName());
 
     boolean expireCache = (lastSyncDate == null);
 
     if (expireCache) {
-      Log.w(TAG, "expiring caches for " + m_updater.getEngineName());
+      Log.d(TAG, "expiring caches for " + m_updater.getEngineName());
       m_updater.deleteRecords(resolver);
-//        m_syncCache.clear();
+//        syncCache.clear();
     }
 
     QueryParams parms = new QueryParams();
     if (lastSyncDate != null) {
       Date lastModDate = getLastModified(userWeave, m_updater.getEngineName());
-      Log.w(TAG, String.format("compmod %s to %s", lastSyncDate, lastModDate));
+      Log.d(TAG, String.format("compmod %s to %s", lastSyncDate, lastModDate));
       if (lastModDate != null) {
-//          Log.w(TAG, String.format("compmod %s to %s", lastSyncDate.getTime(), lastModDate.getTime()));
+//          Log.d(TAG, String.format("compmod %s to %s", lastSyncDate.getTime(), lastModDate.getTime()));
         if (!lastModDate.after(lastSyncDate))
           return 0;
       }
       parms.setNewer(lastSyncDate);
     }
     boolean useCaches = !expireCache;
-//      AbstractKeyManager session = m_syncCache.createKeyManager(userWeave, loginInfo.getSecret());
+//      AbstractKeyManager session = syncCache.createKeyManager(userWeave, loginInfo.getSecret());
     QueryResult<List<WeaveBasicObject>> queryResult =
         getCollection(userWeave, m_updater.getNodePath(), parms);
     List<WeaveBasicObject> wboList = queryResult.getValue();
@@ -87,14 +85,14 @@ public class SyncAssistant {
       records.add(new Weaves.Record(wbo, decryptedPayload));
     }
     int insertCnt = m_updater.insertRecords(resolver, records);
-    m_syncCache.updateLastSync(metaGlobal.getUri(), m_updater.getEngineName(), queryResult.getServerTimestamp());
+    syncCache.updateLastSync(metaGlobal.getUri(), m_updater.getEngineName(), queryResult.getServerTimestamp());
     return insertCnt;
   }
 
   private Date getLastModified(UserWeave userWeave, String name) throws WeaveException {
     try {
       JSONObject infoCol = userWeave.getNode(UserWeave.HashNode.INFO_COLLECTIONS).getValue();
-        Log.w(TAG, "infoCol (" + name + ") : " + infoCol.toString(2));
+       Log.d(TAG, "infoCol (" + name + ") : " + infoCol.toString(2));
       if (infoCol.has(name)) {
         long modLong = infoCol.getLong(name);
 //        Log.w(TAG, "modLong (" + name + ") : " + modLong);

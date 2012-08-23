@@ -12,23 +12,22 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.net.Uri;
-import android.util.Log;
+import org.emergent.android.weave.util.Dbg.Log;
+import org.emergent.android.weave.Constants;
 import org.emergent.android.weave.util.Dbg;
 
 /**
  * @author Patrick Woodworth
  */
-abstract class AbstractContentProvider extends ContentProvider {
+abstract class AbstractContentProvider extends ContentProvider implements Constants.Implementable {
 
-  protected static final int DATABASE_VERSION = 4;
+  protected static final int DATABASE_VERSION = 5;
 
   private static final String DATABASE_NAME = "weave.db";
 
   protected static final String BOOKMARK_TABLE_NAME = "Bookmark";
 
   protected static final String PASSWORD_TABLE_NAME = "Password";
-
-  private static final String TAG = Dbg.getTag(AbstractContentProvider.class);
 
   protected SQLiteDatabase sqlDB;
 
@@ -53,14 +52,13 @@ abstract class AbstractContentProvider extends ContentProvider {
   @Override
   public boolean onCreate() {
     Context context = getContext();
-    Log.v(TAG,String.format("ONCREATE context : (%s)", context.toString()));
     dbHelper = createDatabaseHelper(context);
     return (dbHelper != null);
   }
 
   private int getUriId(Uri uri) {
     int retval = sUriMatcher.match(uri);
-    Log.v(TAG,String.format("getUriId (%s) : %d", uri.toString(), retval));
+    Log.d(TAG, String.format("getUriId (%s) : %d", uri.toString(), retval));
     if (retval != -1)
       return retval;
 //    if ((Bookmarks.AUTHORITY).equals(uri.toString())) {
@@ -110,8 +108,7 @@ abstract class AbstractContentProvider extends ContentProvider {
 
   @Override
   public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-    Log.d(TAG, "query: uri = " + uri);
-    Log.d(TAG, "query: selection = " + selection);
+    Log.d(TAG, "query: uri = \"" + uri + "\" ; selection = " + selection );
     SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
     qb.setTables(getTableName(uri));
     try {

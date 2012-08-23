@@ -16,6 +16,13 @@
 
 package org.emergent.android.weave.syncadapter;
 
+import org.emergent.android.weave.Constants;
+import org.emergent.android.weave.PrefKey;
+import org.emergent.android.weave.R;
+import org.emergent.android.weave.StaticUtils;
+import org.emergent.android.weave.client.WeaveAccountInfo;
+import org.emergent.android.weave.util.Dbg.*;
+
 import android.accounts.AccountManager;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -30,16 +37,9 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.*;
-import org.emergent.android.weave.Constants;
-import org.emergent.android.weave.DobbyUtil;
-import org.emergent.android.weave.PrefKey;
-import org.emergent.android.weave.R;
-import org.emergent.android.weave.client.WeaveAccountInfo;
-import org.emergent.android.weave.util.Dbg;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -49,10 +49,7 @@ import java.util.Properties;
  * Activity which displays login screen to the user.
  */
 public class LoginActivity extends Activity
-    implements AdapterView.OnItemSelectedListener, View.OnClickListener
-{
-
-  private static final String TAG = Dbg.getTag(LoginActivity.class);
+    implements AdapterView.OnItemSelectedListener, View.OnClickListener, Constants.Implementable {
 
   public static final String EXTRA_ALLCERTS = "allcerts";
   public static final String EXTRA_AUTHACTION = "authAction";
@@ -147,12 +144,11 @@ public class LoginActivity extends Activity
 
     button = (Button)findViewById(R.id.next_button);
     button.setOnClickListener(this);
-
+    button = (Button)findViewById(R.id.test_button);
+    button.setOnClickListener(this);
     Properties defs = Constants.getRuntimeDefaults();
     if (!defs.isEmpty()) {
-      button = (Button)findViewById(R.id.test_button);
-      button.setOnClickListener(this);
-      button.setVisibility(View.VISIBLE);
+      button.setText(R.string.test);
     }
   }
 
@@ -195,7 +191,12 @@ public class LoginActivity extends Activity
         handleAuthenticate();
         break;
       case R.id.test_button:
-        initWidgetTestData();
+        Properties defs = Constants.getRuntimeDefaults();
+        if (!defs.isEmpty()) {
+          initWidgetTestData();
+        } else {
+          handleCancelAndClose();
+        }
         break;
     }
   }
@@ -203,11 +204,17 @@ public class LoginActivity extends Activity
   private void handleSaveAndClose(AuthResult authResult) {
     final Intent intent = new Intent();
     WeaveAccountInfo loginInfo = authResult.m_info;
-    DobbyUtil.loginInfoToIntent(loginInfo, intent);
+    StaticUtils.loginInfoToIntent(loginInfo, intent);
     intent.putExtra(AccountManager.KEY_ACCOUNT_TYPE, Constants.ACCOUNT_TYPE);
     setResult(RESULT_OK, intent);
     finish();
   }
+
+  private void handleCancelAndClose() {
+    setResult(RESULT_CANCELED);
+    finish();
+  }
+
 
   /**
    * When the user selects an item in the spinner, this method is invoked by the callback chain. Android calls the item
@@ -448,9 +455,9 @@ public class LoginActivity extends Activity
     String password = m_passwordEdit.getText().toString();
     String secret = m_secretEdit.getText().toString();
     boolean allcerts = true; // m_allcertsCheck.isChecked();
-    Log.w(TAG, String.format("Authenticating: %s : %s @ %s", username, password, serverUri));
+    Log.d(TAG, "Authenticating: " + username + " : " + password + " @ " + serverUri);
     WeaveAccountInfo retval = createWeaveInfo(serverUri, username, password, secret);
-    final SharedPreferences prefs = DobbyUtil.getAccountPreferences(LoginActivity.this, retval);
+    final SharedPreferences prefs = StaticUtils.getAccountPreferences(LoginActivity.this, retval);
     prefs.edit().putBoolean(PrefKey.allcerts.name(), allcerts).commit();
     return retval;
   }

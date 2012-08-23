@@ -1,88 +1,129 @@
 package org.emergent.android.weave;
 
-import android.app.AlertDialog;
-import android.app.TabActivity;
-import android.content.*;
+import android.app.*;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.net.Uri;
 import android.os.Bundle;
-import android.util.Log;
+import android.os.Handler;
+import android.os.Message;
+import org.emergent.android.weave.util.Dbg.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.TabHost;
 import android.widget.TextView;
 import android.widget.Toast;
-import org.emergent.android.weave.client.WeaveException;
-import org.emergent.android.weave.persistence.Bookmarks;
-import org.emergent.android.weave.persistence.Passwords;
-import org.emergent.android.weave.syncadapter.SyncAssistant;
-import org.emergent.android.weave.util.Dbg;
+import org.emergent.android.weave.client.WeaveAccountInfo;
+import org.emergent.android.weave.util.FragmentTabListener;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.lang.ref.WeakReference;
 
 /**
  * @author Patrick Woodworth
  */
-public class MainActivity extends TabActivity implements SyncManager.SyncListener {
-
-  private static final String TAG = Dbg.getTag(MainActivity.class);
+public class MainActivity extends Activity implements Constants.Implementable, FragUtils.FragmentDataStore {
 
   private static final int DEFAULT_TAB = 0;
 
+  public static final boolean HIDE_TITLE = false;
+  public static final boolean USE_TAB_ICONS = false;
+
+  private final Handler m_handler = new MyHandler(this);
+
+  private final Bundle m_fragData = new Bundle();
+
+  public MainActivity() {
+    Log.v(TAG, getClass().getSimpleName() + ".<init> (" + hashCode() + ")");
+  }
+
+  @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.tabbed_main);
+    Log.v(TAG, getClass().getSimpleName() + ".onCreate (" + hashCode() + "): " + (savedInstanceState != null));
+    setContentView(R.layout.prime);
 
-    Resources res = getResources(); // Resource object to get Drawables
-    TabHost tabHost = getTabHost();  // The activity TabHost
-    TabHost.TabSpec spec;  // Resusable TabSpec for each tab
-    Intent intent;  // Reusable Intent for each tab
+    // setup action bar for tabs
+    ActionBar actionBar = getActionBar();
+    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+    if (HIDE_TITLE) {
+      actionBar.setDisplayShowTitleEnabled(false);
+    }
 
-    intent = new Intent().setClass(this, BookmarkListActivity.class);
-    spec = tabHost.newTabSpec("bookmarks")
-        .setIndicator("Bookmarks", res.getDrawable(R.drawable.ic_tab_bookmarks))
-        .setContent(intent);
-    tabHost.addTab(spec);
+    int curTab = DEFAULT_TAB;
 
-    intent = new Intent().setClass(this, PasswordListActivity.class);
-    spec = tabHost.newTabSpec("passwords")
-        .setIndicator("Passwords", res.getDrawable(R.drawable.ic_tab_visited))
-        .setContent(intent);
-    tabHost.addTab(spec);
+    if (savedInstanceState != null) {
+      Bundle fragData = savedInstanceState.getBundle("fragData");
+      if (fragData != null) {
+        Log.d(TAG, "MainActivity.onCreate: got fragData!");
+        for (String key : fragData.keySet()) {
+          Log.d(TAG, "  fragData key: " + key);
+          if (!m_fragData.containsKey(key))
+            m_fragData.putBundle(key, fragData.getBundle(key));
+        }
+      }
 
-    SyncManager.addSyncListener(this);
-    String msg = SyncManager.isSyncing() ? "Synchronizing..." : null;
-    setNotifyText(msg);
+      curTab = savedInstanceState.getInt(PrefKey.opentab.name(), DEFAULT_TAB);
+    }
 
-    Resources resources = getResources();
-    SharedPreferences p = getSharedPrefs(this);
-    DobbyUtil.checkUpgrade(this);
-    if (PrefKey.sync_on_open.getBoolean(p, resources)) {
-      SyncManager.requestSync(this);
+    createAndAddTab(R.string.bookmarks, BookmarkListFragment.class, R.drawable.ic_tab_bookmarks, curTab);
+    createAndAddTab(R.string.passwords, PasswordListFragment.class, R.drawable.ic_tab_visited, curTab);
+
+    if (savedInstanceState != null) {
+//      setCurrentTab(savedInstanceState.getInt(PrefKey.opentab.name(), -1));
+    } else {
+      Resources resources = getResources();
+      SharedPreferences p = StaticUtils.getApplicationPreferences(this);
+      StaticUtils.checkUpgrade(this);
+
+      if (!readInstanceState(this))
+        setInitialState();
+      if (PrefKey.sync_on_open.getBoolean(p, resources)) {
+        StaticUtils.requestSync(this, m_handler);
+      }
+    }
+  }
+
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    Log.v(TAG, getClass().getSimpleName() + ".onSaveInstanceState (" + hashCode() + ")");
+    super.onSaveInstanceState(outState);
+    outState.putInt(PrefKey.opentab.name(), getCurrentTab());
+    outState.putBundle("fragData", m_fragData);
+  }
+
+  @Override
+  protected void onRestoreInstanceState(Bundle savedInstanceState) {
+    Log.v(TAG, getClass().getSimpleName() + ".onRestoreInstanceState (" + hashCode() + "): " + (savedInstanceState != null));
+    super.onRestoreInstanceState(savedInstanceState);
+    if (savedInstanceState == null)
+      return;
+
+    Bundle fragData = savedInstanceState.getBundle("fragData");
+    if (fragData != null) {
+      for (String key : fragData.keySet()) {
+        if (!m_fragData.containsKey(key))
+          m_fragData.putBundle(key, fragData.getBundle(key));
+      }
+    }
+    int curTab = savedInstanceState.getInt(PrefKey.opentab.name(), -1);
+    if (curTab != getCurrentTab()) {
+      setCurrentTab(curTab);
     }
   }
 
   @Override
   protected void onResume() {
+    Log.v(TAG, getClass().getSimpleName() + ".onResume (" + hashCode() + ")");
     super.onResume();
-    if (!readInstanceState(this))
-      setInitialState();
   }
 
   @Override
   public void onPause() {
-    super.onPause();
+    Log.v(TAG, getClass().getSimpleName() + ".onPause (" + hashCode() + ")");
     saveData();
-  }
-
-  @Override
-  protected void onDestroy() {
-    SyncManager.removeSyncListener(this);
-    super.onDestroy();
+    super.onPause();
   }
 
   @Override
@@ -113,20 +154,23 @@ public class MainActivity extends TabActivity implements SyncManager.SyncListene
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
+      case android.R.id.home:
+        FragUtils.popFragmentViewDelayed(getFragmentManager());
+        return true;
       case R.id.account:
-        SyncManager.launchLoginEditor(this);
+        StaticUtils.launchLoginEditor(this);
         return true;
       case R.id.help:
-        launchHelp();
+        StaticUtils.launchHelp(this);
         return true;
       case R.id.reset:
-        wipeData();
+        StaticUtils.wipeData(this);
         return true;
       case R.id.resync:
-        SyncManager.requestSync(this);
+        StaticUtils.requestSync(this, m_handler);
         return true;
       case R.id.settings:
-        launchPreferencesEditor();
+        StaticUtils.launchPreferencesEditor(this);
         return true;
       case R.id.about:
         AboutActivity.showAbout(this);
@@ -136,69 +180,178 @@ public class MainActivity extends TabActivity implements SyncManager.SyncListene
     }
   }
 
-  private void launchHelp() {
-    Uri uriUrl = Uri.parse(getResources().getString(R.string.help_url));
-    Intent intent = new Intent(Intent.ACTION_VIEW, uriUrl);
-    startActivity(intent);
-  }
-
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    SyncManager.handleLoginEditorResult(this, requestCode, resultCode, data);
+    if (requestCode == Constants.EDIT_ACCOUNT_LOGIN_REQUEST_CODE) {
+      if (resultCode != RESULT_OK) {
+        return;
+      }
+      SharedPreferences appPrefs = StaticUtils.getApplicationPreferences(this);
+      SharedPreferences.Editor editor = appPrefs.edit();
+      StaticUtils.intentToLoginPrefs(editor, data);
+      boolean updateSaved = editor.commit();
+      WeaveAccountInfo loginInfo = StaticUtils.intentToLogin(data);
+      StaticUtils.requestSync(this, loginInfo, m_handler);
+    }
   }
 
   @Override
-  public void syncStatusChanged(SyncManager.SyncEvent event) {
-    String msg;
-    switch (event.getType()) {
+  public void onBackPressed() {
+    boolean handled = false;
+    try {
+      ActionBar actionBar = getActionBar();
+      if (actionBar == null) {
+        Log.d(TAG, "actionBar was null!");
+        return;
+      }
+
+      ActionBar.Tab tab = actionBar.getSelectedTab();
+      if (tab == null) {
+        Log.d(TAG, "tab was null!");
+        return;
+      }
+
+      Object tag = tab.getTag();
+      if (tag != null)
+        tag = tag.toString();
+
+      if (!(tag instanceof String)) {
+        Log.d(TAG, "tag type was: " + (tag == null ? "null" : tag.getClass().getSimpleName()));
+        return;
+      }
+
+      FragmentManager fm = getFragmentManager();
+      Fragment frag = fm.findFragmentByTag((String)tag);
+
+      if (!(frag instanceof FragUtils.BackPressedHandler)) {
+        Log.d(TAG, "frag type was: " + (frag == null ? "null" : frag.getClass().getSimpleName()));
+        return;
+      }
+
+      if (!frag.isVisible()) {
+        Log.d(TAG, "frag was not visible!");
+        return;
+      }
+
+      handled = ((FragUtils.BackPressedHandler)frag).handleBackPressed();
+//      Log.w(TAG, "handleBackPressed returned: " + handled);
+    } catch (Exception e) {
+      Log.e(TAG, "Could not check onBackPressed", e);
+    } finally {
+      if (!handled) {
+        super.onBackPressed();
+      }
+    }
+  }
+
+  @Override
+  public Bundle getFragData(String tag) {
+    return m_fragData.getBundle(tag);
+  }
+
+  @Override
+  public void setFragData(String tag, Bundle bundle) {
+    m_fragData.putBundle(tag, bundle);
+  }
+
+  private void setInitialState() {
+//    setCurrentTab(DEFAULT_TAB);
+  }
+
+  private boolean readInstanceState(Context c) {
+    SharedPreferences p = StaticUtils.getApplicationPreferences(c);
+//    setCurrentTab(p.getInt(PrefKey.opentab.name(), DEFAULT_TAB));
+
+    // SharedPreferences doesn't fail if the code tries to get a non-existent key. The most straightforward way to
+    // indicate success is to return the results of a test that * SharedPreferences contained the position key.
+    return (p.contains(PrefKey.lastPrefSave.name()));
+  }
+
+  private void saveData() {
+    // Save the state to the preferences file. If it fails, display a Toast, noting the failure.
+    if (!writeInstanceState(this)) {
+      Toast.makeText(this, "Failed to write state!", Toast.LENGTH_LONG).show();
+    }
+  }
+
+  private boolean writeInstanceState(Context c) {
+    SharedPreferences p = StaticUtils.getApplicationPreferences(c);
+    SharedPreferences.Editor e = p.edit();
+    e.putLong(PrefKey.lastPrefSave.name(), System.currentTimeMillis());
+    e.putInt(PrefKey.opentab.name(), getCurrentTab());
+
+    // Commit the changes. Return the result of the commit. The commit fails if Android failed to commit the changes to
+    // persistent storage.
+    return (e.commit());
+  }
+
+  protected int getCurrentTab() {
+    ActionBar actionBar = getActionBar();
+    int retval = actionBar.getSelectedNavigationIndex();
+    Log.d(TAG, "getCurrentTab: " + retval);
+    return retval;
+  }
+
+  protected void setCurrentTab(int idx) {
+    if (false)
+      return;
+    Log.d(TAG, "setCurrentTab: " + idx);
+    ActionBar actionBar = getActionBar();
+    int tabCnt = actionBar.getTabCount();
+    if (idx < 0 || idx >= tabCnt)
+      return;
+    ActionBar.Tab tab = actionBar.getTabAt(idx);
+    actionBar.selectTab(tab);
+  }
+
+  private <T extends Fragment> void createAndAddTab(int nameId, Class<T> clazz, int iconId, int curTab) {
+    Resources res = getResources();
+    ActionBar actionBar = getActionBar();
+    String tagStr = res.getString(nameId);
+    Bundle args = new Bundle();
+    args.putString(Constants.Implementable.FRAG_TAG_BUNDLE_KEY, tagStr);
+    ActionBar.Tab tab = actionBar.newTab()
+        .setText(nameId)
+        .setTag(tagStr)
+        .setTabListener(new FragmentTabListener<T>(this, R.id.fragment_content, tagStr, clazz, args))
+        ;
+
+    if (iconId > 0 && MainActivity.USE_TAB_ICONS) {
+      tab.setIcon(res.getDrawable(iconId));
+    }
+
+    int pos = actionBar.getTabCount();
+    actionBar.addTab(tab, pos, pos == curTab);
+  }
+
+  private void updateSyncStatusText(Message message) {
+    String msgtxt = null;
+    SyncEventType eventType = SyncEventType.valueOf(message.arg2);
+    switch (eventType) {
+      case STARTED:
+        msgtxt = "Synchronizing...";
+        break;
+      case BAD_USERNAME:
+        msgtxt = "Sync failed: bad username!";
+        break;
+      case BAD_PASSWORD:
+        msgtxt = "Sync failed: bad password!";
+        break;
+      case BAD_SYNCKEY:
+        msgtxt = "Sync failed: bad sync key!";
+        break;
       case FAILED:
-        @SuppressWarnings("ThrowableResultOfMethodCallIgnored") Throwable e = event.getThrowable();
-        msg = String.format("%s : %s", e.getClass().getSimpleName(), e.getLocalizedMessage());
-        if (e instanceof WeaveException) {
-          switch (((WeaveException)e).getType()) {
-            case UNAUTHORIZED:
-              msg = "Sync failed: bad password";
-              break;
-            case NOTFOUND:
-              msg = "Sync failed: bad username";
-              break;
-            case CRYPTO:
-              msg = "Sync failed: bad synckey";
-              break;
-            default:
-              break;
-          }
-        }
+        Object obj = message.obj;
+        String msg = obj != null ? obj.toString() : null;
+        msgtxt = "Sync failed: " + msg;
         break;
       default:
-        msg = event.isSyncing() ? "Synchronizing..." : null;
-        break;
+        // use default
     }
-    setNotifyText(msg);
+    setNotifyText(msgtxt);
   }
 
-  protected void launchPreferencesEditor() {
-    Intent intent = new Intent();
-    intent.setClass(this, ApplicationOptionsActivity.class);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-    startActivity(intent);
-  }
-
-  private void wipeData() {
-    AlertDialog adb = (new AlertDialog.Builder(this))
-        .setTitle(R.string.reset_confirm_title)
-        .setMessage(R.string.reset_confirm_message)
-        .setPositiveButton(R.string.reset, new DialogInterface.OnClickListener() {
-          @Override
-          public void onClick(DialogInterface dialog, int which) {
-            DobbyUtil.wipeDataImpl(MainActivity.this);
-          }
-        })
-        .setNegativeButton(R.string.cancel, null)
-        .show();
-  }
-
-  protected void setNotifyText(String msg) {
+  private void setNotifyText(String msg) {
     TextView notify_text = (TextView)findViewById(R.id.notify_text);
     if (notify_text == null) {
       Log.w(TAG, "notify_text was null!");
@@ -212,37 +365,22 @@ public class MainActivity extends TabActivity implements SyncManager.SyncListene
     notify_text.setVisibility(visibility);
   }
 
-  public void setInitialState() {
-    getTabHost().setCurrentTab(DEFAULT_TAB);
-  }
+  private static class MyHandler extends Handler {
 
-  public boolean readInstanceState(Context c) {
-    SharedPreferences p = getSharedPrefs(c);
-    getTabHost().setCurrentTab(p.getInt(PrefKey.opentab.name(), DEFAULT_TAB));
+    private final WeakReference<MainActivity> m_activityRef;
 
-    // SharedPreferences doesn't fail if the code tries to get a non-existent key. The most straightforward way to
-    // indicate success is to return the results of a test that * SharedPreferences contained the position key.
-    return (p.contains(PrefKey.opentab.name()));
-  }
-
-  private void saveData() {
-    // Save the state to the preferences file. If it fails, display a Toast, noting the failure.
-    if (!writeInstanceState(this)) {
-      Toast.makeText(this, "Failed to write state!", Toast.LENGTH_LONG).show();
+    public MyHandler(MainActivity activity) {
+      m_activityRef = new WeakReference<MainActivity>(activity);
     }
-  }
 
-  public boolean writeInstanceState(Context c) {
-    SharedPreferences p = getSharedPrefs(c);
-    SharedPreferences.Editor e = p.edit();
-    e.putInt(PrefKey.opentab.name(), getTabHost().getCurrentTab());
-
-    // Commit the changes. Return the result of the commit. The commit fails if Android failed to commit the changes to
-    // persistent storage.
-    return (e.commit());
-  }
-
-  private SharedPreferences getSharedPrefs(Context c) {
-    return DobbyUtil.getApplicationPreferences(c);
+    @Override
+    public void handleMessage(Message message) {
+      if (message.arg1 == Constants.SYNC_EVENT) {
+        MainActivity activity = m_activityRef.get();
+        if (activity == null)
+          return;
+        activity.updateSyncStatusText(message);
+      }
+    }
   }
 }

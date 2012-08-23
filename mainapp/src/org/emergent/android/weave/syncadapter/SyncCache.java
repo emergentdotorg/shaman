@@ -23,7 +23,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 import android.provider.BaseColumns;
-import android.util.Log;
+import org.emergent.android.weave.util.Dbg.Log;
+import org.emergent.android.weave.Constants;
+import org.emergent.android.weave.ShamanApplication;
 import org.emergent.android.weave.util.Dbg;
 import org.emergent.android.weave.client.QueryResult;
 import org.json.JSONException;
@@ -39,14 +41,14 @@ import java.util.Properties;
 /**
  * @author Patrick Woodworth
  */
-class SyncCache {
+class SyncCache implements Constants.Implementable {
+
+  private static SyncCache sm_instance = null;
 
   private static final long MGD_MISMATCH = -1;
   private static final long MGD_MISSING = 0;
 
-  private static final String TAG = Dbg.getTag(SyncCache.class);
-
-  protected static final int DATABASE_VERSION = 4;
+  protected static final int DATABASE_VERSION = 5;
 
   private static final String DATABASE_NAME = "synccache.db";
 
@@ -54,76 +56,22 @@ class SyncCache {
 
   protected static final String KEY_HASH_TABLE_NAME = "KeyHashDat";
 
-//  private static final AtomicReference<Map<String, String>> sm_bytesMap =
-//      new AtomicReference<Map<String, String>>(new ConcurrentHashMap<String, String>());
-
   private final CacheDbHelper m_helper;
 
-  public SyncCache(Context context) {
-    m_helper = new CacheDbHelper(context);
+  public static synchronized SyncCache getInstance() {
+    if (sm_instance == null) {
+      Context context = ShamanApplication.getInstance();
+      if (context == null) {
+        throw new NullPointerException("ShsmanApplication.getInstance was null!");
+      }
+      sm_instance = new SyncCache(context);
+    }
+    return sm_instance;
   }
 
-//  public AbstractKeyManager createKeyManager(UserWeave weave, char[] secret) {
-////    if (!useCaches)
-////      sm_bytesMap.set(new ConcurrentHashMap<String,String>());
-//    return new SyncCacheKeyManager(weave, secret, m_helper);
-//  }
-//
-//  private class SyncCacheKeyManager extends AbstractKeyManager {
-//
-////    private final Map<String, String> m_bytesMap;
-//    private final CacheDbHelper m_dbHelper;
-//
-//    private SyncCacheKeyManager(UserWeave weave, char[] secret, CacheDbHelper dbHelper) {
-//      super(weave, secret);
-////      m_bytesMap = bytesMap;
-//      m_dbHelper = dbHelper;
-//    }
-//
-//    @Override
-//    protected String lookup(String key) {
-////      return m_bytesMap.get(key);
-//
-//      String retval = null;
-//      SQLiteDatabase db = null;
-//      Cursor cur = null;
-//      try {
-//        db = m_dbHelper.getWritableDatabase();
-//        cur = query(db, KEY_HASH_TABLE_NAME,
-//            new String[]{KhColumns.KEY_DATA},
-//            KhColumns.NODE_URI + " = ?",
-//            new String[]{key});
-//
-//        if (cur.moveToFirst())
-//          retval = cur.getString(cur.getColumnIndex(KhColumns.KEY_DATA));
-//
-//      } finally {
-//        if (cur != null) try { cur.close(); } catch (Exception ignored) { }
-//        if (db != null) try { db.close(); } catch (Exception ignored) { }
-//      }
-//      return retval;
-//    }
-//
-//    @Override
-//    protected void store(String key, String data) {
-////      m_bytesMap.put(key, data);
-//
-//      SQLiteDatabase db = null;
-//      try {
-//        db = m_dbHelper.getWritableDatabase();
-//        ContentValues values = new ContentValues();
-//        values.put(KhColumns.NODE_URI, key);
-//        values.put(KhColumns.KEY_DATA, data);
-//        long rowId = db.insert(KEY_HASH_TABLE_NAME, null, values);
-//        Log.d(TAG, "SyncCacheKeyManager.store() : rowid = " + rowId);
-//      } finally {
-//        if (db != null) try {
-//          db.close();
-//        } catch (Exception ignored) {
-//        }
-//      }
-//    }
-//  }
+  private SyncCache(Context context) {
+    m_helper = new CacheDbHelper(context);
+  }
 
   public void clear() {
     SQLiteDatabase db = null;
@@ -145,7 +93,7 @@ class SyncCache {
       db = m_helper.getWritableDatabase();
       int count = db.delete(KEY_HASH_TABLE_NAME, null, null);
       count += db.delete(META_GLOBAL_TABLE_NAME, null, null);
-      Log.d(TAG, "SyncCacheKeyManager.reset() : count = " + count);
+      Log.d(TAG, "SyncCacheKeyManager.resetCaches() : count = " + count);
     } finally {
       if (db != null) try {
         db.close();
@@ -263,7 +211,7 @@ class SyncCache {
       }
 
       if (cur.moveToFirst()) {
-        Log.w(TAG, String.format("found mgd cached for engine %s at %s", engineName, nodeUri));
+        Log.d(TAG, String.format("found mgd cached for engine %s at %s", engineName, nodeUri));
         String cachedVal;
 
         cachedVal = cur.getString(cur.getColumnIndex(MgColumns.GLOBAL_VERSION));
@@ -292,7 +240,7 @@ class SyncCache {
 
         return cur.getLong(cur.getColumnIndex(MgColumns.LAST_MODIFIED));
       } else {
-        Log.w(TAG, String.format("no mgd cached cached for engine %s at %s", engineName, nodeUri));
+        Log.d(TAG, String.format("no mgd cached cached for engine %s at %s", engineName, nodeUri));
       }
     } finally {
       if (cur != null) try {
@@ -481,6 +429,7 @@ class SyncCache {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
       db.execSQL("DROP TABLE IF EXISTS " + META_GLOBAL_TABLE_NAME);
+      db.execSQL("DROP TABLE IF EXISTS " + KEY_HASH_TABLE_NAME);
       onCreate(db);
     }
   }

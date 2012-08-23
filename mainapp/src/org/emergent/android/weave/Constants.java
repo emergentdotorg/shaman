@@ -17,6 +17,7 @@
 package org.emergent.android.weave;
 
 import android.accounts.AccountManager;
+import org.emergent.android.weave.util.Dbg;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -55,6 +56,12 @@ public class Constants {
 
   public static final String ROW_ID_INTENT_EXTRA_KEY = APP_PACKAGE_NAME + ".rowId";
 
+  public static final String LOGININFO = "LOGININFO";
+
+  public static final String MESSENGER = "MESSENGER";
+
+  public static final int SYNC_EVENT = 1;
+
   static final boolean MENUITEM_HELP_DISABLED = true;
   static final boolean MENUITEM_RESET_DISABLED = false;
   static final boolean MENUITEM_SETTINGS_DISABLED = true;
@@ -88,5 +95,11 @@ public class Constants {
       }
     }
     return sm_runtimeProps;
+  }
+
+  public static interface Implementable {
+
+    public static final String TAG = Dbg.TAG;
+    String FRAG_TAG_BUNDLE_KEY = "fragTag";
   }
 }
