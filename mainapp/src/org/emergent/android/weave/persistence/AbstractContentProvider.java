@@ -29,7 +29,7 @@ abstract class AbstractContentProvider extends ContentProvider implements Consta
 
   protected static final String PASSWORD_TABLE_NAME = "Password";
 
-  protected SQLiteDatabase sqlDB;
+//  protected SQLiteDatabase sqlDB;
 
   protected SQLiteOpenHelper dbHelper;
 
@@ -74,16 +74,35 @@ abstract class AbstractContentProvider extends ContentProvider implements Consta
   }
 
   @Override
+  public int bulkInsert(Uri uri, ContentValues[] values) {
+    int numValues = values.length;
+    SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
+    sqlDB.beginTransaction();
+    try {
+      for (int i = 0; i < numValues; i++) {
+        insert0(getContext().getContentResolver(), sqlDB, uri, values[i]);
+      }
+      sqlDB.setTransactionSuccessful();
+    } finally {
+      sqlDB.endTransaction();
+    }
+    return numValues;
+  }
+
+  @Override
   public Uri insert(Uri uri, ContentValues contentvalues) {
 //    Log.d(TAG, "insert: uri = " + uri);
-//    getUriId(uri);
     // get database to insert records
-    sqlDB = dbHelper.getWritableDatabase();
+    SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
+    return insert0(getContext().getContentResolver(), sqlDB, uri, contentvalues);
+  }
+
+  private Uri insert0(ContentResolver resolver, SQLiteDatabase sqlDB, Uri uri, ContentValues contentvalues) {
     // insert record in user table and get the row number of recently inserted record
     long rowId = sqlDB.insert(getTableName(uri), "", contentvalues);
     if (rowId > 0) {
       Uri rowUri = ContentUris.appendId(getTableUri(uri).buildUpon(), rowId).build();
-      getContext().getContentResolver().notifyChange(rowUri, null); //todo should we use the last param?
+      resolver.notifyChange(rowUri, null); //todo should we use the last param?
       return rowUri;
     }
     throw new SQLException("Failed to insert row into " + uri);
@@ -92,8 +111,9 @@ abstract class AbstractContentProvider extends ContentProvider implements Consta
   @Override
   public int delete(Uri uri, String whereClause, String[] whereArgs) {
     Log.d(TAG, "delete: uri = " + uri);
-    sqlDB = dbHelper.getWritableDatabase();
+    SQLiteDatabase sqlDB = dbHelper.getWritableDatabase();
     int count = sqlDB.delete(getTableName(uri), whereClause, whereArgs);
+//    sqlDB.close();
     if (count > 0) {
       getContext().getContentResolver().notifyChange(getTableUri(uri), null); //todo should we use the last param?
     }
