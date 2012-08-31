@@ -57,7 +57,7 @@ public class SyncAssistant implements Constants.Implementable {
     QueryResult<JSONObject> metaGlobal = userWeave.getNode(UserWeave.HashNode.META_GLOBAL);
     ContentResolver resolver = m_context.getContentResolver();
     Date lastSyncDate = syncCache.validateMetaGlobal(metaGlobal, m_updater.getEngineName());
-    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "vmg", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
+    Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "vmg", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
     lastOpTime = System.currentTimeMillis();
 
     boolean expireCache = (lastSyncDate == null);
@@ -67,7 +67,7 @@ public class SyncAssistant implements Constants.Implementable {
     if (expireCache) {
       Log.d(TAG, "expiring caches for " + m_updater.getEngineName());
       recCnt = m_updater.deleteRecords(resolver);
-      Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "del", (System.currentTimeMillis() - lastOpTime) / 1000.0, recCnt));
+      Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "del", (System.currentTimeMillis() - lastOpTime) / 1000.0, recCnt));
 //        syncCache.clear();
       lastOpTime = System.currentTimeMillis();
     }
@@ -89,7 +89,7 @@ public class SyncAssistant implements Constants.Implementable {
     lastOpTime = System.currentTimeMillis();
     QueryResult<List<WeaveBasicObject>> queryResult = getCollection(userWeave, m_updater.getNodePath(), parms);
     List<WeaveBasicObject> wboList = queryResult.getValue();
-    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "retrieve", (System.currentTimeMillis() - lastOpTime) / 1000.0, wboList.size() ));
+    Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "retrieve", (System.currentTimeMillis() - lastOpTime) / 1000.0, wboList.size() ));
     lastOpTime = System.currentTimeMillis();
 
     BulkKeyTool bulkTool = userWeave.getBulkTool(loginInfo.getSecret());
@@ -99,15 +99,15 @@ public class SyncAssistant implements Constants.Implementable {
       records.add(new Weaves.Record(wbo, decryptedPayload));
     }
 
-    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "decrypt", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
+    Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "decrypt", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
     lastOpTime = System.currentTimeMillis();
 
     recCnt = m_updater.insertRecords(resolver, records);
-    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "ins", (System.currentTimeMillis() - lastOpTime) / 1000.0, recCnt));
+    Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "ins", (System.currentTimeMillis() - lastOpTime) / 1000.0, recCnt));
 
     syncCache.updateLastSync(metaGlobal.getUri(), m_updater.getEngineName(), queryResult.getServerTimestamp());
 
-    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "total", (System.currentTimeMillis() - startTime) / 1000.0));
+    Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "total", (System.currentTimeMillis() - startTime) / 1000.0));
     return recCnt;
   }
 
