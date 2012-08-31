@@ -172,6 +172,11 @@ public class UserWeave implements SlimWeave {
     }
   }
 
+  public BulkKeyTool getBulkTool(char[] secret) throws GeneralSecurityException, WeaveException {
+    byte[] syncKey = Base32.decodeModified(new String(secret)); // todo don't convert to string
+    return new BulkKeyTool(getBulkKeyPair(syncKey));
+  }
+
   private URI getClusterUriSafe() {
     URI retval = m_authUri;
     try {
