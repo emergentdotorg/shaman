@@ -78,16 +78,19 @@ public class WeaveBasicObject {
     return new JSONObject(m_nodeObj.getString("payload"));
   }
 
-  public JSONObject getEncryptedPayload(UserWeave weave, char[] secret) throws JSONException, IOException, WeaveException {
+  public JSONObject getEncryptedPayload(BulkKeyTool bulkTool) throws JSONException, IOException, WeaveException {
+    return getEncryptedPayload(bulkTool.getBulkKeyCouplet());
+  }
+
+  private JSONObject getEncryptedPayload(BulkKeyCouplet bulkKeyPair) throws JSONException, IOException, WeaveException {
     try {
       WeaveEncryptedObject weo = new WeaveEncryptedObject(getPayload());
-      byte[] syncKey = Base32.decodeModified(new String(secret)); // todo don't convert to string
-      BulkKeyCouplet bulkKeyPair = weave.getBulkKeyPair(syncKey);
       return weo.decryptObject(bulkKeyPair);
     } catch (GeneralSecurityException e) {
       throw new WeaveException(e);
     }
   }
+
 
   public JSONObject getEncryptedPayload(Key bulkKey, Key hmacKey)
       throws JSONException, IOException, GeneralSecurityException, WeaveException {

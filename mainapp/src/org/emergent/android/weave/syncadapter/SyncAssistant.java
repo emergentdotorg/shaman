@@ -21,7 +21,6 @@ import org.emergent.android.weave.util.Dbg.Log;
 import org.emergent.android.weave.Constants;
 import org.emergent.android.weave.client.*;
 import org.emergent.android.weave.persistence.Weaves;
-import org.emergent.android.weave.util.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -47,21 +46,32 @@ public class SyncAssistant implements Constants.Implementable {
     SyncCache.getInstance().reset();
   }
 
+
   public int doQueryAndUpdate(String authToken) throws Exception {
+    long startTime = System.currentTimeMillis();
+    long lastOpTime = startTime;
+
     SyncCache syncCache = SyncCache.getInstance();
     WeaveAccountInfo loginInfo = NetworkUtilities.createWeaveAccountInfo(authToken);
     UserWeave userWeave = NetworkUtilities.createUserWeave(loginInfo, m_context);
     QueryResult<JSONObject> metaGlobal = userWeave.getNode(UserWeave.HashNode.META_GLOBAL);
     ContentResolver resolver = m_context.getContentResolver();
     Date lastSyncDate = syncCache.validateMetaGlobal(metaGlobal, m_updater.getEngineName());
+    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "vmg", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
+    lastOpTime = System.currentTimeMillis();
 
     boolean expireCache = (lastSyncDate == null);
 
+    int recCnt = 0;
+
     if (expireCache) {
       Log.d(TAG, "expiring caches for " + m_updater.getEngineName());
-      m_updater.deleteRecords(resolver);
+      recCnt = m_updater.deleteRecords(resolver);
+      Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "del", (System.currentTimeMillis() - lastOpTime) / 1000.0, recCnt));
 //        syncCache.clear();
+      lastOpTime = System.currentTimeMillis();
     }
+
 
     QueryParams parms = new QueryParams();
     if (lastSyncDate != null) {
@@ -75,18 +85,30 @@ public class SyncAssistant implements Constants.Implementable {
       parms.setNewer(lastSyncDate);
     }
     boolean useCaches = !expireCache;
-//      AbstractKeyManager session = syncCache.createKeyManager(userWeave, loginInfo.getSecret());
-    QueryResult<List<WeaveBasicObject>> queryResult =
-        getCollection(userWeave, m_updater.getNodePath(), parms);
+
+    lastOpTime = System.currentTimeMillis();
+    QueryResult<List<WeaveBasicObject>> queryResult = getCollection(userWeave, m_updater.getNodePath(), parms);
     List<WeaveBasicObject> wboList = queryResult.getValue();
+    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "retrieve", (System.currentTimeMillis() - lastOpTime) / 1000.0, wboList.size() ));
+    lastOpTime = System.currentTimeMillis();
+
+    BulkKeyTool bulkTool = userWeave.getBulkTool(loginInfo.getSecret());
     List<Weaves.Record> records = new ArrayList<Weaves.Record>();
     for (WeaveBasicObject wbo : wboList) {
-      JSONObject decryptedPayload = wbo.getEncryptedPayload(userWeave, loginInfo.getSecret());
+      JSONObject decryptedPayload = wbo.getEncryptedPayload(bulkTool);
       records.add(new Weaves.Record(wbo, decryptedPayload));
     }
-    int insertCnt = m_updater.insertRecords(resolver, records);
+
+    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "decrypt", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
+    lastOpTime = System.currentTimeMillis();
+
+    recCnt = m_updater.insertRecords(resolver, records);
+    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f (%d)", "ins", (System.currentTimeMillis() - lastOpTime) / 1000.0, recCnt));
+
     syncCache.updateLastSync(metaGlobal.getUri(), m_updater.getEngineName(), queryResult.getServerTimestamp());
-    return insertCnt;
+
+    Log.w(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "total", (System.currentTimeMillis() - startTime) / 1000.0));
+    return recCnt;
   }
 
   private Date getLastModified(UserWeave userWeave, String name) throws WeaveException {
