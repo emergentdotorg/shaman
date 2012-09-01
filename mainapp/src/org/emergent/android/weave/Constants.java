@@ -56,10 +56,6 @@ public class Constants {
 
   public static final String ROW_ID_INTENT_EXTRA_KEY = APP_PACKAGE_NAME + ".rowId";
 
-  public static final String LOGININFO = "LOGININFO";
-
-  public static final String MESSENGER = "MESSENGER";
-
   public static final int SYNC_EVENT = 1;
 
   static final boolean MENUITEM_HELP_DISABLED = true;
@@ -73,7 +69,7 @@ public class Constants {
   private static final Properties sm_runtimeProps = new Properties();
 
   private static final AtomicLong sm_runtimePropsLastReload = new AtomicLong(0);
-
+  public static final boolean MENUITEM_HOME_DISABLED = ApiCompatUtil.IS_HONEYCOMB;
 
 
   public static Properties getRuntimeDefaults() {

@@ -11,6 +11,7 @@
   <string name="reset_action">Reset</string>
   <string name="resync_action">Sync</string>
   <string name="settings_action">Settings</string>
+  <string name="home">Home</string>
 
   <string name="ng_no_items">No items found to display</string>
 
@@ -102,7 +103,9 @@
   <string name="bookmark_icon_content_description">Bookmark Favicon</string>
 
   <string name="sync_notify_title">Shaman Synchronizing</string>
-  <string name="sync_notify_text">Synchronization operation in progress.</string>
+  <string name="sync_notify_text">Synchronization in progress.</string>
   <string name="sync_notify_ticker">Synchronizing</string>
+
+  <string name="launcher_icon_content_description">Shaman Icon</string>
 
 </resources>

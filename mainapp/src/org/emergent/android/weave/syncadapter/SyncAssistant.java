@@ -32,10 +32,12 @@ import java.util.List;
 /**
 * @author Patrick Woodworth
 */
-public class SyncAssistant implements Constants.Implementable {
+class SyncAssistant implements Constants.Implementable {
 
   private final Context m_context;
   private final Weaves.Updater m_updater;
+
+  public static final boolean PARTIAL_SYNC_ENABLED = false;
 
   public SyncAssistant(Context context, Weaves.Updater updater) {
     m_context = context;
@@ -51,12 +53,14 @@ public class SyncAssistant implements Constants.Implementable {
     long startTime = System.currentTimeMillis();
     long lastOpTime = startTime;
 
-    SyncCache syncCache = SyncCache.getInstance();
     WeaveAccountInfo loginInfo = NetworkUtilities.createWeaveAccountInfo(authToken);
-    UserWeave userWeave = NetworkUtilities.createUserWeave(loginInfo, m_context);
+    UserWeave userWeave = NetworkUtilities.createUserWeave(loginInfo);
     QueryResult<JSONObject> metaGlobal = userWeave.getNode(UserWeave.HashNode.META_GLOBAL);
     ContentResolver resolver = m_context.getContentResolver();
+
+    SyncCache syncCache = SyncCache.getInstance();
     Date lastSyncDate = syncCache.validateMetaGlobal(metaGlobal, m_updater.getEngineName());
+
     Log.d(TAG, String.format("SyncAssistant.doQueryAndUpdate %10s: %7.3f", "vmg", (System.currentTimeMillis() - lastOpTime) / 1000.0 ));
     lastOpTime = System.currentTimeMillis();
 
@@ -74,16 +78,21 @@ public class SyncAssistant implements Constants.Implementable {
 
 
     QueryParams parms = new QueryParams();
-    if (lastSyncDate != null) {
-      Date lastModDate = getLastModified(userWeave, m_updater.getEngineName());
-      Log.d(TAG, String.format("compmod %s to %s", lastSyncDate, lastModDate));
-      if (lastModDate != null) {
-//          Log.d(TAG, String.format("compmod %s to %s", lastSyncDate.getTime(), lastModDate.getTime()));
-        if (!lastModDate.after(lastSyncDate))
-          return 0;
+    if (PARTIAL_SYNC_ENABLED) {
+      if (lastSyncDate != null) {
+        Date lastModDate = getLastModified(userWeave, m_updater.getEngineName());
+        Log.d(TAG, String.format("compmod %s to %s", lastSyncDate, lastModDate));
+        if (lastModDate != null) {
+          if (!lastModDate.after(lastSyncDate)) {
+            return 0;
+          } else {
+          }
+        }
+        parms.setNewer(lastSyncDate);
+      } else {
       }
-      parms.setNewer(lastSyncDate);
     }
+
     boolean useCaches = !expireCache;
 
     lastOpTime = System.currentTimeMillis();

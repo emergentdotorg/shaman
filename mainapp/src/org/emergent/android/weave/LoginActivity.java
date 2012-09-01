@@ -14,13 +14,10 @@
  * limitations under the License.
  */
 
-package org.emergent.android.weave.syncadapter;
+package org.emergent.android.weave;
 
-import org.emergent.android.weave.Constants;
-import org.emergent.android.weave.PrefKey;
-import org.emergent.android.weave.R;
-import org.emergent.android.weave.StaticUtils;
 import org.emergent.android.weave.client.WeaveAccountInfo;
+import org.emergent.android.weave.syncadapter.SyncUtil;
 import org.emergent.android.weave.util.Dbg.*;
 
 import android.accounts.AccountManager;
@@ -32,8 +29,9 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.Editable;
 import android.text.TextUtils;
 import android.text.TextWatcher;
@@ -41,6 +39,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.*;
 
+import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Properties;
@@ -70,9 +69,10 @@ public class LoginActivity extends Activity
   private static final int DEFAULT_SERVER_SPINNER_POSITION = 1;
   private static final int CUSTOM_SERVER_SPINNER_POSITION = 0;
 
+  private final Handler m_handler = new MyHandler(this);
+
   private AccountManager m_accountMgr;
 
-  private AsyncTask<WeaveAccountInfo, Integer, AuthResult> mAuthThread;
   private String m_authtokenType;
   private int m_authAction;
 
@@ -237,11 +237,11 @@ public class LoginActivity extends Activity
   }
 
   private void cancelAuthTask() {
-    if (mAuthThread != null) {
-      mAuthThread.cancel(true);
-      mAuthThread = null;
+//    if (mAuthThread != null) {
+//      mAuthThread.cancel(true);
+//      mAuthThread = null;
       finish();
-    }
+//    }
   }
 
   /**
@@ -258,30 +258,7 @@ public class LoginActivity extends Activity
     showProgress();
     // Start authenticating...
 
-    mAuthThread = new AsyncTask<WeaveAccountInfo, Integer, AuthResult>() {
-      @Override
-      protected AuthResult doInBackground(WeaveAccountInfo... accountInfos) {
-        WeaveAccountInfo accountInfo = accountInfos[0];
-        try {
-          NetworkUtilities.authenticate(LoginActivity.this, accountInfo);
-          return new AuthResult(true, accountInfo, null, null);
-        } catch (Throwable e) {
-          Log.w(TAG, e);
-          return new AuthResult(false, accountInfo, "auth failed", e);
-        }
-      }
-
-      @Override
-      protected void onProgressUpdate(Integer... values) {
-      }
-
-      @Override
-      protected void onPostExecute(AuthResult result) {
-        onAuthenticationResult(result);
-      }
-    };
-
-    mAuthThread.execute(loginInfo);
+    SyncUtil.requestAuth(this, loginInfo, m_handler);
   }
 
   private void onAuthenticationResult(final AuthResult authResult) {
@@ -482,5 +459,55 @@ public class LoginActivity extends Activity
     return retval;
   }
 
+  private void updateSyncStatusText(Message message) {
+    AuthResult result = null;
+    Object obj = message.obj;
+    WeaveAccountInfo accountInfo = StaticUtils.bundleToLogin((Bundle)obj);
+    SyncEventType eventType = SyncEventType.valueOf(message.arg2);
+    switch (eventType) {
+      case COMPLETED:
+        result = new AuthResult(true, accountInfo, null, null);
+        break;
+      case FAILED:
+      default:
+        result =  new AuthResult(false, accountInfo, "auth failed", null);
+        break;
+    }
+    onAuthenticationResult(result);
+  }
+
+  private static class AuthResult {
+
+    public final boolean m_success;
+    public final WeaveAccountInfo m_info;
+    public final String m_message;
+    public final Throwable m_thrown;
+
+    public AuthResult(boolean success, WeaveAccountInfo info, String message, Throwable thrown) {
+      m_success = success;
+      m_info = info;
+      m_message = message;
+      m_thrown = thrown;
+    }
+  }
+
+  private static class MyHandler extends Handler {
+
+    private final WeakReference<LoginActivity> m_activityRef;
+
+    public MyHandler(LoginActivity activity) {
+      m_activityRef = new WeakReference<LoginActivity>(activity);
+    }
+
+    @Override
+    public void handleMessage(Message message) {
+      if (message.arg1 == Constants.SYNC_EVENT) {
+        LoginActivity activity = m_activityRef.get();
+        if (activity == null)
+          return;
+        activity.updateSyncStatusText(message);
+      }
+    }
+  }
 }
 

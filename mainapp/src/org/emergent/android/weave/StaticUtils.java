@@ -21,12 +21,13 @@ import android.accounts.AccountManager;
 import android.app.*;
 import android.content.*;
 import android.net.Uri;
+import android.os.Bundle;
 import android.os.Handler;
-import android.os.Messenger;
 import android.preference.PreferenceManager;
+
+import org.emergent.android.weave.syncadapter.SyncUtil;
 import org.emergent.android.weave.util.Dbg.Log;
 import org.emergent.android.weave.client.WeaveAccountInfo;
-import org.emergent.android.weave.syncadapter.LoginActivity;
 
 import java.net.URI;
 import java.util.Map;
@@ -88,6 +89,26 @@ public class StaticUtils implements Constants.Implementable {
     return intent;
   }
 
+  public static Bundle loginToBundle(WeaveAccountInfo loginInfo) {
+    Bundle intent = new Bundle();
+    if (loginInfo != null) {
+      intent.putString(AccountManager.KEY_ACCOUNT_NAME, loginInfo.getUsername());
+      intent.putString(AccountManager.KEY_PASSWORD, loginInfo.getPassword());
+      intent.putString(Constants.USERDATA_SERVER_KEY, loginInfo.getServerAsString());
+      intent.putString(Constants.USERDATA_SECRET_KEY, loginInfo.getSecretAsString());
+    }
+    return intent;
+  }
+
+  public static WeaveAccountInfo bundleToLogin(Bundle data) {
+    return WeaveAccountInfo.createWeaveAccountInfo(
+        URI.create(data.getString(Constants.USERDATA_SERVER_KEY)),
+        data.getString(AccountManager.KEY_ACCOUNT_NAME),
+        data.getString(AccountManager.KEY_PASSWORD),
+        data.getString(Constants.USERDATA_SECRET_KEY).toCharArray()
+    );
+  }
+
   public static WeaveAccountInfo intentToLogin(Intent data) {
     return WeaveAccountInfo.createWeaveAccountInfo(
         URI.create(data.getStringExtra(Constants.USERDATA_SERVER_KEY)),
@@ -123,7 +144,7 @@ public class StaticUtils implements Constants.Implementable {
 
   public static void wipeDataImpl(Context context) {
     Log.w(TAG, "wipeData");
-    requestReset(context, null);
+    SyncUtil.requestReset(context, null);
   }
 
   public static void dumpPrefs(SharedPreferences prefs) {
@@ -150,7 +171,7 @@ public class StaticUtils implements Constants.Implementable {
     }
   }
 
-  static WeaveAccountInfo getLoginInfo(Context context) {
+  public static WeaveAccountInfo getLoginInfo(Context context) {
     WeaveAccountInfo loginInfo = null;
     try {
       Intent intent = getLoginInfoIntent(context);
@@ -182,7 +203,7 @@ public class StaticUtils implements Constants.Implementable {
     if (loginInfo == null) {
       launchLoginEditor(activity);
     } else {
-      requestSync(activity, loginInfo, handler);
+      SyncUtil.requestSync(activity, loginInfo, handler);
     }
     return true;
   }
@@ -221,28 +242,7 @@ public class StaticUtils implements Constants.Implementable {
         .show();
   }
 
-  public static void requestSync(Activity activity, WeaveAccountInfo loginInfo, Handler handler) {
-    if (loginInfo == null)
-      return;
-
-    Intent intent = new Intent(activity, SyncService.class);
-    intent.putExtra(SyncService.INTENT_EXTRA_OP_KEY, SyncService.INTENT_EXTRA_SYNC_REQUEST);
-    if (handler != null) {
-      // Create a new Messenger for the communication back
-      Messenger messenger = new Messenger(handler);
-      intent.putExtra(Constants.MESSENGER, messenger);
-    }
-    activity.startService(intent);
-  }
-
-  public static void requestReset(Context activity, Handler handler) {
-    Intent intent = new Intent(activity, SyncService.class);
-    intent.putExtra(SyncService.INTENT_EXTRA_OP_KEY, SyncService.INTENT_EXTRA_RESET_REQUEST);
-    if (handler != null) {
-      // Create a new Messenger for the communication back
-      Messenger messenger = new Messenger(handler);
-      intent.putExtra(Constants.MESSENGER, messenger);
-    }
-    activity.startService(intent);
+  public static boolean isEmpty(String s) {
+    return s == null || s.trim().length() < 1;
   }
 }

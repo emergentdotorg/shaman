@@ -1,13 +1,9 @@
 package org.emergent.android.weave;
 
 import org.emergent.android.weave.client.WeaveAccountInfo;
+import org.emergent.android.weave.syncadapter.SyncUtil;
 import org.emergent.android.weave.util.Dbg.*;
-import org.emergent.android.weave.util.FragmentTabListener;
 
-import android.app.ActionBar;
-import android.app.Activity;
-import android.app.Fragment;
-import android.app.FragmentManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -15,12 +11,14 @@ import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.lang.ref.WeakReference;
@@ -28,12 +26,9 @@ import java.lang.ref.WeakReference;
 /**
  * @author Patrick Woodworth
  */
-public class MainActivity extends Activity implements Constants.Implementable, FragUtils.FragmentDataStore {
+public class MainActivity extends FragmentActivity implements FragUtils.FragmentDataStore, Constants.Implementable {
 
   private static final int DEFAULT_TAB = 0;
-
-  public static final boolean HIDE_TITLE = false;
-  public static final boolean USE_TAB_ICONS = false;
 
   private final Handler m_handler = new MyHandler(this);
 
@@ -47,14 +42,13 @@ public class MainActivity extends Activity implements Constants.Implementable, F
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     Log.v(TAG, getClass().getSimpleName() + ".onCreate (" + hashCode() + "): " + (savedInstanceState != null));
-    setContentView(R.layout.prime);
 
-    // setup action bar for tabs
-    ActionBar actionBar = getActionBar();
-    actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-    if (HIDE_TITLE) {
-      actionBar.setDisplayShowTitleEnabled(false);
-    }
+    ApiCompatUtil compatUtil = ApiCompatUtil.getInstance();
+    compatUtil.requestWindowFeatures(this);
+    setContentView(R.layout.prime);
+    compatUtil.setWindowFeatures(this);
+
+    compatUtil.setupActionBar(this);
 
     int curTab = DEFAULT_TAB;
 
@@ -72,21 +66,30 @@ public class MainActivity extends Activity implements Constants.Implementable, F
       curTab = savedInstanceState.getInt(PrefKey.opentab.name(), DEFAULT_TAB);
     }
 
-    createAndAddTab(R.string.bookmarks, BookmarkListFragment.class, R.drawable.ic_tab_bookmarks, curTab);
-    createAndAddTab(R.string.passwords, PasswordListFragment.class, R.drawable.ic_tab_visited, curTab);
-
+    boolean upgraded = false;
     if (savedInstanceState != null) {
 //      setCurrentTab(savedInstanceState.getInt(PrefKey.opentab.name(), -1));
     } else {
       Resources resources = getResources();
       SharedPreferences p = StaticUtils.getApplicationPreferences(this);
-      StaticUtils.checkUpgrade(this);
-
+      upgraded = StaticUtils.checkUpgrade(this);
       if (!readInstanceState(this))
         setInitialState();
       if (PrefKey.sync_on_open.getBoolean(p, resources)) {
-        StaticUtils.requestSync(this, m_handler);
+        WeaveAccountInfo loginInfo = StaticUtils.getLoginInfo(this);
+        if (upgraded || loginInfo == null) {
+          StaticUtils.requestSync(this, m_handler);
+        }
       }
+    }
+
+    FragmentManager fm = getSupportFragmentManager();
+    // You can find Fragments just like you would with a View by using FragmentManager.
+    Fragment fragment = fm.findFragmentById(R.id.fragment_content);
+
+    // If we are using activity_fragment_xml.xml then this the fragment will not be null, otherwise it will be.
+    if (fragment == null) {
+      setMyFragment(new MiscListFragment(), false);
     }
   }
 
@@ -135,6 +138,12 @@ public class MainActivity extends Activity implements Constants.Implementable, F
   public boolean onCreateOptionsMenu(Menu menu) {
     MenuInflater inflater = getMenuInflater();
     inflater.inflate(R.menu.main_menu, menu);
+    if (Constants.MENUITEM_HOME_DISABLED) {
+      MenuItem item = menu.findItem(R.id.home);
+      if (item != null) {
+        item.setVisible(false);
+      }
+    }
     if (Constants.MENUITEM_RESET_DISABLED) {
       MenuItem item = menu.findItem(R.id.reset);
       if (item != null) {
@@ -160,7 +169,8 @@ public class MainActivity extends Activity implements Constants.Implementable, F
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case android.R.id.home:
-        FragUtils.popFragmentViewDelayed(getFragmentManager());
+      case R.id.home:
+        FragUtils.popFragmentViewDelayed(getSupportFragmentManager());
         return true;
       case R.id.account:
         StaticUtils.launchLoginEditor(this);
@@ -196,38 +206,29 @@ public class MainActivity extends Activity implements Constants.Implementable, F
       StaticUtils.intentToLoginPrefs(editor, data);
       boolean updateSaved = editor.commit();
       WeaveAccountInfo loginInfo = StaticUtils.intentToLogin(data);
-      StaticUtils.requestSync(this, loginInfo, m_handler);
+      SyncUtil.requestSync(this, loginInfo, m_handler);
     }
+  }
+
+  public void setMyFragment(Fragment fragment) {
+    setMyFragment(fragment, true);
+  }
+
+  public void setMyFragment(Fragment fragment, boolean addToBackStack) {
+    FragmentManager fm = getSupportFragmentManager();
+    FragmentTransaction ft = fm.beginTransaction();
+    ft.replace(R.id.fragment_content, fragment);
+    if (addToBackStack)
+      ft.addToBackStack(null);
+    ft.commit();
   }
 
   @Override
   public void onBackPressed() {
     boolean handled = false;
     try {
-      ActionBar actionBar = getActionBar();
-      if (actionBar == null) {
-        Log.d(TAG, "actionBar was null!");
-        return;
-      }
-
-      ActionBar.Tab tab = actionBar.getSelectedTab();
-      if (tab == null) {
-        Log.d(TAG, "tab was null!");
-        return;
-      }
-
-      Object tag = tab.getTag();
-      if (tag != null)
-        tag = tag.toString();
-
-      if (!(tag instanceof String)) {
-        Log.d(TAG, "tag type was: " + (tag == null ? "null" : tag.getClass().getSimpleName()));
-        return;
-      }
-
-      FragmentManager fm = getFragmentManager();
-      Fragment frag = fm.findFragmentByTag((String)tag);
-
+      FragmentManager fm = getSupportFragmentManager();
+      Fragment frag = fm.findFragmentById(R.id.fragment_content);
       if (!(frag instanceof FragUtils.BackPressedHandler)) {
         Log.d(TAG, "frag type was: " + (frag == null ? "null" : frag.getClass().getSimpleName()));
         return;
@@ -291,42 +292,10 @@ public class MainActivity extends Activity implements Constants.Implementable, F
   }
 
   protected int getCurrentTab() {
-    ActionBar actionBar = getActionBar();
-    int retval = actionBar.getSelectedNavigationIndex();
-    Log.d(TAG, "getCurrentTab: " + retval);
-    return retval;
+    return DEFAULT_TAB;
   }
 
   protected void setCurrentTab(int idx) {
-    if (false)
-      return;
-    Log.d(TAG, "setCurrentTab: " + idx);
-    ActionBar actionBar = getActionBar();
-    int tabCnt = actionBar.getTabCount();
-    if (idx < 0 || idx >= tabCnt)
-      return;
-    ActionBar.Tab tab = actionBar.getTabAt(idx);
-    actionBar.selectTab(tab);
-  }
-
-  private <T extends Fragment> void createAndAddTab(int nameId, Class<T> clazz, int iconId, int curTab) {
-    Resources res = getResources();
-    ActionBar actionBar = getActionBar();
-    String tagStr = res.getString(nameId);
-    Bundle args = new Bundle();
-    args.putString(Constants.Implementable.FRAG_TAG_BUNDLE_KEY, tagStr);
-    ActionBar.Tab tab = actionBar.newTab()
-        .setText(nameId)
-        .setTag(tagStr)
-        .setTabListener(new FragmentTabListener<T>(this, R.id.fragment_content, tagStr, clazz, args))
-        ;
-
-    if (iconId > 0 && MainActivity.USE_TAB_ICONS) {
-      tab.setIcon(res.getDrawable(iconId));
-    }
-
-    int pos = actionBar.getTabCount();
-    actionBar.addTab(tab, pos, pos == curTab);
   }
 
   private void updateSyncStatusText(Message message) {

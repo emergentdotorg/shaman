@@ -18,11 +18,12 @@ package org.emergent.android.weave.syncadapter;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+
+import org.emergent.android.weave.ShamanApplication;
 import org.emergent.android.weave.StaticUtils;
 import org.emergent.android.weave.client.UserWeave;
 import org.emergent.android.weave.client.WeaveConstants;
 import org.emergent.android.weave.PrefKey;
-import org.emergent.android.weave.util.Dbg;
 import org.emergent.android.weave.client.WeaveAccountInfo;
 import org.emergent.android.weave.client.WeaveException;
 import org.emergent.android.weave.client.WeaveFactory;
@@ -49,24 +50,21 @@ class NetworkUtilities {
     return retval;
   }
 
-  public static UserWeave createUserWeave(WeaveAccountInfo accountInfo, Context context) {
-    WeaveFactory factory = getWeaveFactory(allowAllCerts(context, accountInfo));
+  public static UserWeave createUserWeave(WeaveAccountInfo accountInfo) {
+    WeaveFactory factory = getWeaveFactory(allowAllCerts(accountInfo));
     return factory.createUserWeave(accountInfo.getServer(), accountInfo.getUsername(), accountInfo.getPassword());
   }
 
-  public static String authenticate(Context context, String serverUri, String username, String password, String secret)
+  public static String authenticate(String serverUri, String username, String password, String secret)
       throws WeaveException, JSONException, URISyntaxException
   {
     WeaveAccountInfo loginInfo = WeaveAccountInfo.createWeaveAccountInfo(serverUri, username, password, secret == null ? null : secret.toCharArray());
-    NetworkUtilities.authenticate(context, loginInfo);
+    NetworkUtilities.authenticate(loginInfo);
     return createAuthToken(serverUri, username, password, secret);
   }
 
-  public static void authenticate(Context context, WeaveAccountInfo loginInfo) throws WeaveException, JSONException {
-//    SyncCache syncCache = SyncCache.getInstance();
-//    AbstractKeyManager keyMgr = syncCache.createKeyManager(createUserWeave(loginInfo, context), loginInfo.getSecret());
-//    keyMgr.authenticateSecret();
-    UserWeave keyMgr = createUserWeave(loginInfo, context);
+  public static void authenticate(WeaveAccountInfo loginInfo) throws WeaveException, JSONException {
+    UserWeave keyMgr = createUserWeave(loginInfo);
     keyMgr.authenticateSecret(loginInfo.getSecret());
   }
 
@@ -78,7 +76,8 @@ class NetworkUtilities {
     return WeaveAccountInfo.createWeaveAccountInfo(authToken);
   }
 
-  private static boolean allowAllCerts(Context context, WeaveAccountInfo info) {
+  private static boolean allowAllCerts(WeaveAccountInfo info) {
+    Context context = ShamanApplication.getInstance();
     SharedPreferences prefs = StaticUtils.getAccountPreferences(context, info);
     return prefs.getBoolean(PrefKey.allcerts.name(), WeaveConstants.ALLOW_INVALID_CERTS_DEFAULT);
   }

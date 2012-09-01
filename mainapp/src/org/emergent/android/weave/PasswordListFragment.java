@@ -16,21 +16,26 @@
 
 package org.emergent.android.weave;
 
+import org.emergent.android.weave.persistence.Passwords;
+import org.emergent.android.weave.persistence.Weaves;
+import org.emergent.android.weave.util.Dbg.*;
+
 import android.app.Activity;
 import android.content.Context;
-import android.content.CursorLoader;
-import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.ClipboardManager;
 import android.text.TextUtils;
-import org.emergent.android.weave.util.Dbg.Log;
 import android.view.View;
-import android.widget.*;
-import org.emergent.android.weave.persistence.Passwords;
-import org.emergent.android.weave.persistence.Weaves;
-import org.emergent.android.weave.util.Dbg;
+import android.widget.EditText;
+import android.widget.ListAdapter;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 /**
 * @author Patrick Woodworth
@@ -92,6 +97,11 @@ public class PasswordListFragment extends WeaveListFragment implements FragUtils
     String msg = "Password copied to clipboard.";
     Toast toast = Toast.makeText(activity, msg, Toast.LENGTH_SHORT);
     toast.show();
+  }
+
+  @Override
+  public String getFragTag() {
+    return "Passwords";
   }
 
   @Override

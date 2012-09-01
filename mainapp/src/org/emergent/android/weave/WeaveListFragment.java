@@ -16,22 +16,27 @@
 
 package org.emergent.android.weave;
 
+import org.emergent.android.weave.util.Dbg.*;
+
 import android.app.Activity;
-import android.app.ListFragment;
-import android.app.LoaderManager;
 import android.content.Context;
-import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.CursorAdapter;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.Editable;
 import android.text.TextWatcher;
-import org.emergent.android.weave.util.Dbg.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.*;
+import android.widget.EditText;
 
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.emergent.android.weave.util.Dbg.*;
 
 public abstract class WeaveListFragment extends ListFragment implements Constants.Implementable {
 
@@ -172,12 +177,13 @@ public abstract class WeaveListFragment extends ListFragment implements Constant
     Log.v(TAG, getClass().getSimpleName() + ".onDetach (" + hashCode() + ")");
   }
 
-  public final String getFragTag() {
+  public String getFragTag() {
     if (m_fragTag == null) {
       Bundle args = getArguments();
       if (args != null)
         m_fragTag = args.getString(FRAG_TAG_BUNDLE_KEY);
     }
+    Log.d(TAG, "WeaveListFragment.getFragTag: \"" + m_fragTag + "\"");
     return m_fragTag;
   }
 

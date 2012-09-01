@@ -6,6 +6,7 @@
         <option name="LINE_SEPARATOR" value="&#10;" />
         <option name="FIELD_NAME_PREFIX" value="m_" />
         <option name="STATIC_FIELD_NAME_PREFIX" value="sm_" />
+        <option name="CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND" value="99" />
         <option name="PACKAGES_TO_USE_IMPORT_ON_DEMAND">
           <value>
             <package name="java.awt" withSubpackages="false" static="false" />

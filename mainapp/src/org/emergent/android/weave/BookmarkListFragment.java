@@ -16,33 +16,33 @@
 
 package org.emergent.android.weave;
 
+import org.emergent.android.weave.persistence.Bookmarks;
+import org.emergent.android.weave.util.Dbg.*;
+
 import android.app.Activity;
 import android.content.Context;
-import android.content.CursorLoader;
 import android.content.Intent;
-import android.content.Loader;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
+import android.support.v4.widget.SimpleCursorAdapter;
 import android.text.TextUtils;
-import org.emergent.android.weave.util.Dbg.Log;
 import android.view.View;
 import android.widget.ListAdapter;
 import android.widget.ListView;
-import android.widget.SimpleCursorAdapter;
-import org.emergent.android.weave.persistence.Bookmarks;
-
-import java.util.ArrayList;
-import java.util.LinkedList;
 
 /**
-* @author Patrick Woodworth
-*/
-public class BookmarkListFragment extends WeaveListFragment implements FragUtils.BackPressedHandler {
+ * @author Patrick Woodworth
+ */
+public class BookmarkListFragment extends WeaveListFragment {
 
-  public static final String PARENTSTACK_BUNDLE_KEY = "parentStack";
+  public static final String PARENT_UUID_BUNDLE_KEY = "parentUuid";
+  public static final String PARENT_NAME_BUNDLE_KEY = "parentName";
 
-  private final LinkedList<String> m_parentStack = new LinkedList<String>();
+  private String m_parentUuid = null;
+  private String m_parentName = null;
 
   @Override
   public void onInnerActivityCreated(Bundle savedInstanceState) {
@@ -60,53 +60,42 @@ public class BookmarkListFragment extends WeaveListFragment implements FragUtils
       }
     }
 
-    if (stateBundle == null) {
-      return;
+    Bundle args = getArguments();
+    if (args != null && args.containsKey(PARENT_UUID_BUNDLE_KEY)) {
+      String parentUuid = args.getString(PARENT_UUID_BUNDLE_KEY);
+      if (!StaticUtils.isEmpty(parentUuid)) {
+        m_parentUuid = parentUuid;
+        validateFilter();
+      }
     }
 
-    ArrayList<String> sStack = stateBundle.getStringArrayList(PARENTSTACK_BUNDLE_KEY);
-    if (sStack != null) {
-      synchronized (m_parentStack) {
-        m_parentStack.clear();
-        m_parentStack.addAll(sStack);
-      }
-      validateFilter();
+    if (stateBundle == null) {
+      return;
     }
   }
 
   @Override
   public void onInnerSaveInstanceState(Bundle outState) {
     super.onInnerSaveInstanceState(outState);
-    outState.putStringArrayList(PARENTSTACK_BUNDLE_KEY, new ArrayList<String>(m_parentStack));
-  }
-
-  @Override
-  public boolean handleBackPressed() {
-    synchronized (m_parentStack) {
-      if (m_parentStack.poll() == null) {
-        return false;
-      } else {
-        validateFilter();
-        return true;
-      }
-    }
+    outState.putString(PARENT_UUID_BUNDLE_KEY, m_parentUuid);
+    outState.putString(PARENT_NAME_BUNDLE_KEY, m_parentName);
   }
 
   public String getParentFolderUuid() {
-    String retval = null;
-    synchronized (m_parentStack) {
-      retval = m_parentStack.peek();
-    }
+    String retval = m_parentUuid;
     if (retval == null)
       retval = "places";
     return retval;
   }
 
   protected void moveIntoFolder(String uuid, String title) {
-    synchronized (m_parentStack) {
-      m_parentStack.addFirst(uuid);
-    }
-    validateFilter();
+    MainActivity activity = (MainActivity)getActivity();
+    Bundle args = new Bundle();
+    args.putString(PARENT_UUID_BUNDLE_KEY, uuid);
+    args.putString(PARENT_NAME_BUNDLE_KEY, title);
+    BookmarkListFragment newfrag = new BookmarkListFragment();
+    newfrag.setArguments(args);
+    activity.setMyFragment(newfrag);
   }
 
   @Override

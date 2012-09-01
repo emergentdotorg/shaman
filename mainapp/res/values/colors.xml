@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <drawable name="even_stripe">#e5edfa</drawable>
-  <drawable name="odd_stripe">#ffffff</drawable>
+  <color name="custom_window_title_background_color">#323331</color>
 </resources>

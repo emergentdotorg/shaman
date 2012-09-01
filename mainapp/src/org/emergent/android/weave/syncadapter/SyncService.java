@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.emergent.android.weave;
+package org.emergent.android.weave.syncadapter;
 
+import org.emergent.android.weave.ApiCompatUtil;
+import org.emergent.android.weave.Constants;
+import org.emergent.android.weave.StaticUtils;
+import org.emergent.android.weave.SyncEventType;
 import org.emergent.android.weave.client.WeaveAccountInfo;
 import org.emergent.android.weave.client.WeaveException;
 import org.emergent.android.weave.persistence.Bookmarks;
 import org.emergent.android.weave.persistence.Passwords;
-import org.emergent.android.weave.syncadapter.SyncAssistant;
 import org.emergent.android.weave.util.Dbg.*;
 
 import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Message;
 import android.os.Messenger;
@@ -42,11 +42,11 @@ import java.util.Set;
  */
 public class SyncService extends IntentService implements Constants.Implementable {
 
-  public static final String INTENT_EXTRA_OP_KEY = "op";
-  public static final int INTENT_EXTRA_SYNC_REQUEST = 1001;
-  public static final int INTENT_EXTRA_RESET_REQUEST = 1002;
+  static final int INTENT_EXTRA_SYNC_REQUEST = 1001;
+  static final int INTENT_EXTRA_RESET_REQUEST = 1002;
+  static final int INTENT_EXTRA_AUTH_REQUEST = 1003;
 
-  private static final int SYNC_RUNNING_NOTIFY_ID = 1;
+  private long m_lastSyncRequestTime = 0;
 
   public SyncService() {
     super("WeaveSyncService");
@@ -60,7 +60,7 @@ public class SyncService extends IntentService implements Constants.Implementabl
       return;
     }
 
-    int opcode = extras.getInt(INTENT_EXTRA_OP_KEY, -1);
+    int opcode = extras.getInt(SyncUtil.INTENT_EXTRA_SYNC_OP_KEY, -1);
     switch (opcode) {
       case INTENT_EXTRA_RESET_REQUEST:
         onHandleResetIntent(intent);
@@ -68,21 +68,44 @@ public class SyncService extends IntentService implements Constants.Implementabl
       case INTENT_EXTRA_SYNC_REQUEST:
         onHandleSyncIntent(intent);
         break;
+      case INTENT_EXTRA_AUTH_REQUEST:
+        onHandleAuthIntent(intent);
+        break;
+    }
+  }
+
+  private void onHandleAuthIntent(Intent intent) {
+    Messenger messenger = null;
+    WeaveAccountInfo loginInfo = null;
+    Bundle loginBundle = null;
+    Bundle extras = intent.getExtras();
+    try {
+      loginBundle = extras.getBundle(SyncUtil.INTENT_EXTRA_SYNC_LOGININFO);
+      messenger = (Messenger)extras.get(SyncUtil.INTENT_EXTRA_SYNC_MESSENGER_KEY);
+      loginInfo = StaticUtils.bundleToLogin(loginBundle);
+      NetworkUtilities.authenticate(loginInfo);
+      sendAuthMessage(messenger, loginBundle);
+    } catch (Exception e) {
+      Log.w(TAG, e);
+      sendAuthMessage(messenger, loginBundle, e);
     }
   }
 
   private void onHandleSyncIntent(Intent intent) {
 //    Uri data = intent.getData();
-    Messenger messenger = null;
     Bundle extras = intent.getExtras();
-    if (extras != null) {
-      messenger = (Messenger)extras.get(Constants.MESSENGER);
+    long reqTimeStamp = extras.getLong(SyncUtil.INTENT_EXTRA_SYNC_REQTIME);
+    if (reqTimeStamp < m_lastSyncRequestTime) {
+      Log.w(TAG, "Skipping redundant sync!");
+      return;
     }
-
-    WeaveAccountInfo loginInfo = StaticUtils.getLoginInfo(this);
+    Messenger messenger = (Messenger)extras.get(SyncUtil.INTENT_EXTRA_SYNC_MESSENGER_KEY);
+    Bundle loginBundle = extras.getBundle(SyncUtil.INTENT_EXTRA_SYNC_LOGININFO);
+    WeaveAccountInfo loginInfo = StaticUtils.bundleToLogin(loginBundle);
     boolean success = false;
+    ApiCompatUtil apiCompatUtil = ApiCompatUtil.getInstance();
     try {
-      postSyncNotification();
+      apiCompatUtil.postSyncNotification(this);
       success = weaveUpdateSync(this, loginInfo);
       if (success) {
         sendMessage(messenger, SyncEventType.COMPLETED);
@@ -93,12 +116,14 @@ public class SyncService extends IntentService implements Constants.Implementabl
       Log.w(TAG, e);
       sendMessage(messenger, e);
     } finally {
-      clearSyncNotification();
+      m_lastSyncRequestTime = System.currentTimeMillis();
+      apiCompatUtil.clearSyncNotification(this);
     }
   }
 
   private void onHandleResetIntent(Intent intent) {
     try {
+      m_lastSyncRequestTime = 0;
       wipeDataImpl2(this);
       Log.w(TAG, "resetCompleted!");
     } catch (Exception e) {
@@ -106,7 +131,7 @@ public class SyncService extends IntentService implements Constants.Implementabl
     }
   }
 
-  public static void wipeDataImpl2(Context context) {
+  private static void wipeDataImpl2(Context context) {
     try {
       SyncAssistant.resetCaches();
       ContentResolver resolver = context.getContentResolver();
@@ -117,7 +142,7 @@ public class SyncService extends IntentService implements Constants.Implementabl
     }
   }
 
-  static boolean weaveUpdateSync(Context context, WeaveAccountInfo loginInfo) throws Exception {
+  private static boolean weaveUpdateSync(Context context, WeaveAccountInfo loginInfo) throws Exception {
     if (loginInfo == null)
       return false;
 
@@ -131,27 +156,6 @@ public class SyncService extends IntentService implements Constants.Implementabl
     }
 
     return true;
-  }
-
-  private void postSyncNotification() {
-    Resources res = getResources();
-    Notification noti = new Notification.Builder(getApplicationContext())
-        .setContentTitle(res.getString(R.string.sync_notify_title))
-        .setContentText(res.getString(R.string.sync_notify_text))
-        .setSmallIcon(R.drawable.sync_anim)
-        .setTicker(res.getString(R.string.sync_notify_ticker))
-        .setOngoing(true)
-        .getNotification();
-
-    String ns = Context.NOTIFICATION_SERVICE;
-    NotificationManager mNotificationManager = (NotificationManager)getSystemService(ns);
-    mNotificationManager.notify(SYNC_RUNNING_NOTIFY_ID, noti);
-  }
-
-  private void clearSyncNotification() {
-    String ns = Context.NOTIFICATION_SERVICE;
-    NotificationManager mNotificationManager = (NotificationManager)getSystemService(ns);
-    mNotificationManager.cancel(SYNC_RUNNING_NOTIFY_ID);
   }
 
   private void sendMessage(Messenger messenger, Throwable e) {
@@ -177,6 +181,24 @@ public class SyncService extends IntentService implements Constants.Implementabl
       Log.w(TAG, "Exception sending message", e1);
     }
   }
+
+  private void sendAuthMessage(Messenger messenger, Bundle loginBundle) {
+    sendAuthMessage(messenger, loginBundle, null);
+  }
+
+  private void sendAuthMessage(Messenger messenger, Bundle loginBundle, Throwable e) {
+    SyncEventType type = (e == null) ? SyncEventType.COMPLETED : SyncEventType.FAILED;
+    Message msg = Message.obtain();
+    msg.arg1 = Constants.SYNC_EVENT;
+    msg.arg2 = type.ordinal();
+    msg.obj = loginBundle;
+    try {
+      messenger.send(msg);
+    } catch (android.os.RemoteException e1) {
+      Log.w(TAG, "Exception sending message", e1);
+    }
+  }
+
 
   private static SyncEventType getSyncStatusType(Throwable e) {
     if (e != null) {
