@@ -20,7 +20,7 @@ import android.content.ContentValues;
 import android.net.Uri;
 import org.emergent.android.weave.util.Dbg.Log;
 import org.emergent.android.weave.Constants;
-import org.emergent.android.weave.client.UserWeave;
+import org.emergent.android.weave.client.CollectionNode;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -34,7 +34,7 @@ public class Bookmarks implements Constants.Implementable {
   public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
   public static final Weaves.Updater UPDATER =
-      new Weaves.Updater(CONTENT_URI, UserWeave.CollectionNode.STORAGE_BOOKMARKS) {
+      new Weaves.Updater(CONTENT_URI, CollectionNode.STORAGE_BOOKMARKS) {
     @Override
     protected void setContentValues(ContentValues values, Weaves.Record info) throws JSONException {
       Bookmarks.setContentValues(values, info);

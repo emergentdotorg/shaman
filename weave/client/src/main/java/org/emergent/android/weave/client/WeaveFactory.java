@@ -33,7 +33,7 @@ public class WeaveFactory {
   }
 
   public UserWeave createUserWeave(URI server, String username, String password) {
-    return new UserWeave(getWeaveTransport(), server, username, password);
+    return new UserWeaveImpl(getWeaveTransport(), server, username, password);
   }
 
   public boolean isInvalidCertsAccepted() {

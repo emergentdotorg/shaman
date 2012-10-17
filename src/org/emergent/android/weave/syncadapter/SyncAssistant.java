@@ -55,7 +55,7 @@ class SyncAssistant implements Constants.Implementable {
 
     WeaveAccountInfo loginInfo = NetworkUtilities.createWeaveAccountInfo(authToken);
     UserWeave userWeave = NetworkUtilities.createUserWeave(loginInfo);
-    QueryResult<JSONObject> metaGlobal = userWeave.getNode(UserWeave.HashNode.META_GLOBAL);
+    QueryResult<JSONObject> metaGlobal = userWeave.getNode(HashNode.META_GLOBAL);
     ContentResolver resolver = m_context.getContentResolver();
 
     SyncCache syncCache = SyncCache.getInstance();
@@ -122,7 +122,7 @@ class SyncAssistant implements Constants.Implementable {
 
   private Date getLastModified(UserWeave userWeave, String name) throws WeaveException {
     try {
-      JSONObject infoCol = userWeave.getNode(UserWeave.HashNode.INFO_COLLECTIONS).getValue();
+      JSONObject infoCol = userWeave.getNode(HashNode.INFO_COLLECTIONS).getValue();
        Log.d(TAG, "infoCol (" + name + ") : " + infoCol.toString(2));
       if (infoCol.has(name)) {
         long modLong = infoCol.getLong(name);

@@ -95,7 +95,7 @@ public class WeaveMain {
     }
   }
 
-  private static synchronized JSONObject getCryptoKeys(SlimWeave weave) throws WeaveException {
+  private static synchronized JSONObject getCryptoKeys(UserWeave weave) throws WeaveException {
     if (smCryptoKeysObj == null) {
       try {
         String respBody = null;
@@ -121,7 +121,7 @@ public class WeaveMain {
     return smCryptoKeysObj;
   }
 
-  private static synchronized BulkKeyCouplet getBulKKeyPair(SlimWeave weave) throws WeaveException, GeneralSecurityException, JSONException {
+  private static synchronized BulkKeyCouplet getBulKKeyPair(UserWeave weave) throws WeaveException, GeneralSecurityException, JSONException {
     if (smBulkKeyPair == null) {
       String userEmail = getUserEmail();
       String userLogin = WeaveUtil.legalizeUsername(userEmail);
@@ -135,7 +135,7 @@ public class WeaveMain {
 
   public static void retrieveAndDump(String nodepath) throws Exception {
     String userEmail = getUserEmail();
-    SlimWeave weave = smWeaveFactory.createUserWeave(URI.create(getServerUrl()), userEmail, getPassword());
+    UserWeave weave = smWeaveFactory.createUserWeave(URI.create(getServerUrl()), userEmail, getPassword());
     BulkKeyCouplet bulkKeyPair = getBulKKeyPair(weave);
 
     String respBody;
@@ -181,7 +181,7 @@ public class WeaveMain {
 
   public static void doPut(String nodepath) throws Exception {
     String userEmail = getUserEmail();
-    SlimWeave weave = smWeaveFactory.createUserWeave(URI.create(getServerUrl()), userEmail, getPassword());
+    UserWeave weave = smWeaveFactory.createUserWeave(URI.create(getServerUrl()), userEmail, getPassword());
     BulkKeyCouplet bulkKeyPair = getBulKKeyPair(weave);
 
     String sendBody = WeaveUtil.readToString(System.in);
@@ -207,7 +207,7 @@ public class WeaveMain {
 
   public static String retrieveRaw(String nodepath) throws Exception {
     String userEmail = getUserEmail();
-    SlimWeave weave = smWeaveFactory.createUserWeave(URI.create(getServerUrl()), userEmail, getPassword());
+    UserWeave weave = smWeaveFactory.createUserWeave(URI.create(getServerUrl()), userEmail, getPassword());
     URI uri = weave.buildSyncUriFromSubpath(nodepath);
     System.err.println("GETURI: " + uri.toASCIIString() );
     WeaveResponse response = weave.getNode(uri);

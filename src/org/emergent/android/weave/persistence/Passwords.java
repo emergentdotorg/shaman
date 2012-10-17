@@ -19,7 +19,7 @@ package org.emergent.android.weave.persistence;
 import android.content.ContentValues;
 import android.net.Uri;
 import org.emergent.android.weave.Constants;
-import org.emergent.android.weave.client.UserWeave;
+import org.emergent.android.weave.client.CollectionNode;
 import org.json.JSONException;
 
 /**
@@ -32,7 +32,7 @@ public class Passwords {
   public static final Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY);
 
   public static final Weaves.Updater UPDATER =
-      new Weaves.Updater(CONTENT_URI, UserWeave.CollectionNode.STORAGE_PASSWORDS) {
+      new Weaves.Updater(CONTENT_URI, CollectionNode.STORAGE_PASSWORDS) {
     @Override
     protected void setContentValues(ContentValues values, Weaves.Record info) throws JSONException {
       Passwords.setContentValues(values, info);

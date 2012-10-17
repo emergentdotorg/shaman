@@ -4,7 +4,8 @@ import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.provider.BaseColumns;
-import org.emergent.android.weave.client.UserWeave;
+
+import org.emergent.android.weave.client.CollectionNode;
 import org.emergent.android.weave.client.WeaveBasicObject;
 import org.emergent.android.weave.client.WeaveUtil;
 import org.json.JSONException;
@@ -50,9 +51,9 @@ public class Weaves {
   public static abstract class Updater {
 
     private final Uri m_authority;
-    private final UserWeave.CollectionNode m_collectionNode;
+    private final CollectionNode m_collectionNode;
 
-    Updater(Uri authority, UserWeave.CollectionNode colNode) {
+    Updater(Uri authority, CollectionNode colNode) {
       m_authority = authority;
       m_collectionNode = colNode;
     }

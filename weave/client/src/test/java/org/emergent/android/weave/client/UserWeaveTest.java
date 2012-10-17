@@ -103,7 +103,7 @@ public class UserWeaveTest extends TestCase {
 
     BulkKeyCouplet bulkKeyPair = weave.getBulkKeyPair(syncKey);
 
-    URI uri = weave.buildSyncUriFromSubpath(UserWeave.CollectionNode.STORAGE_BOOKMARKS.nodePath + "?full=1");
+    URI uri = weave.buildSyncUriFromSubpath(CollectionNode.STORAGE_BOOKMARKS.nodePath + "?full=1");
     QueryResult<List<WeaveBasicObject>> recCol = weave.getWboCollection(uri);
 
     {
@@ -134,7 +134,7 @@ public class UserWeaveTest extends TestCase {
     String legalUsername = WeaveUtil.legalizeUsername(loginInfo.getUsername());
     BulkKeyCouplet bulkKeyPair = WeaveUtil.buildBulkKeyPair(legalUsername, syncKey, cryptoKeysPayload);
 
-    URI uri = weave.buildSyncUriFromSubpath(UserWeave.CollectionNode.STORAGE_BOOKMARKS.nodePath + "?full=1");
+    URI uri = weave.buildSyncUriFromSubpath(CollectionNode.STORAGE_BOOKMARKS.nodePath + "?full=1");
 
     WeaveResponse response = weave.getNode(uri);
     JSONArray jsonPassArray = new JSONArray(response.getBody());
@@ -285,7 +285,7 @@ public class UserWeaveTest extends TestCase {
     }
 
     public UserWeave createUserWeave(WeaveAccountInfo info) {
-      return new UserWeave(getWeaveTransport(),
+      return new UserWeaveImpl(getWeaveTransport(),
           info.getServer(),
           info.getUsername(),
           info.getPassword()
