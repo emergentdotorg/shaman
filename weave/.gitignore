@@ -1,2 +1,5 @@
-.idea/artifacts/
-.idea/libraries/
+.idea/
+*.iml
+
+!client/client.iml
+!server/server.iml
