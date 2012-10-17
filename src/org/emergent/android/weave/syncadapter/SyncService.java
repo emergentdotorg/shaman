@@ -203,12 +203,12 @@ public class SyncService extends IntentService implements Constants.Implementabl
   private static SyncEventType getSyncStatusType(Throwable e) {
     if (e != null) {
       if (e instanceof WeaveException) {
-        switch (((WeaveException)e).getType()) {
-          case UNAUTHORIZED:
+        switch (((WeaveException)e).getErrorCode()) {
+          case WeaveException.UNAUTHORIZED_CODE:
             return SyncEventType.BAD_PASSWORD;
-          case NOTFOUND:
+          case WeaveException.NOTFOUND_CODE:
             return SyncEventType.BAD_USERNAME;
-          case CRYPTO:
+          case WeaveException.CRYPTO_CODE:
             return SyncEventType.BAD_SYNCKEY;
           default:
             break;

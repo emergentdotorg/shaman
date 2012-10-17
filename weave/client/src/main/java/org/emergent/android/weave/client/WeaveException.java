@@ -25,76 +25,73 @@ import java.security.GeneralSecurityException;
  */
 public class WeaveException extends Exception {
 
-  private final WeaveException.ExceptionType m_type;
+  public static final int GENERAL_CODE = 1;
+  public static final int NOTFOUND_CODE = 2;
+  public static final int UNAUTHORIZED_CODE = 3;
+  public static final int CRYPTO_CODE = 4;
+  private static final int BACKOFF_CODE = 5;
+
+  private final int m_errorCode;
 
   public WeaveException() {
-    this(WeaveException.ExceptionType.GENERAL);
+    this(GENERAL_CODE);
   }
 
-  public WeaveException(WeaveException.ExceptionType type) {
-    m_type = type;
+  private WeaveException(int type) {
+    m_errorCode = type;
   }
 
   public WeaveException(String message) {
-    this(WeaveException.ExceptionType.GENERAL, message);
+    this(GENERAL_CODE, message);
   }
 
-  public WeaveException(WeaveException.ExceptionType type, String message) {
+  private WeaveException(int type, String message) {
     super(message);
-    m_type = type;
+    m_errorCode = type;
   }
 
   public WeaveException(Throwable cause) {
     this(getExceptionType(cause), cause);
   }
 
-  public WeaveException(WeaveException.ExceptionType type, Throwable cause) {
+  private WeaveException(int type, Throwable cause) {
     super(cause);
-    m_type = type;
+    m_errorCode = type;
   }
 
   public WeaveException(String message, Throwable cause) {
     this(getExceptionType(cause), message, cause);
   }
 
-  public WeaveException(WeaveException.ExceptionType type, String message, Throwable cause) {
+  private WeaveException(int type, String message, Throwable cause) {
     super(message, cause);
-    m_type = type;
+    m_errorCode = type;
   }
 
-  public WeaveException.ExceptionType getType() {
-    return m_type;
+  public int getErrorCode() {
+    return m_errorCode;
   }
 
-  public static boolean isAuthFailure(HttpResponseException e) {
+  private static boolean isAuthFailure(HttpResponseException e) {
     int statusCode = e.getStatusCode();
     if (WeaveConstants.UNAUTHORIZED_HTTP_STATUS_CODE == statusCode)
       return true;
     return false;
   }
 
-  private static ExceptionType getExceptionType(Throwable cause) {
+  private static int getExceptionType(Throwable cause) {
     if (cause instanceof WeaveTransport.WeaveResponseException) {
       WeaveTransport.WeaveResponseException e = (WeaveTransport.WeaveResponseException)cause;
       if (isAuthFailure(e)) {
-        return ExceptionType.UNAUTHORIZED;
+        return UNAUTHORIZED_CODE;
       }
       if (e.getStatusCode() == WeaveConstants.NOT_FOUND_HTTP_STATUS_CODE) {
-        return ExceptionType.NOTFOUND;
+        return NOTFOUND_CODE;
       }
     }
     if (cause instanceof GeneralSecurityException) {
-      return ExceptionType.CRYPTO;
+      return CRYPTO_CODE;
     }
-    return ExceptionType.GENERAL;
-  }
-
-  public enum ExceptionType {
-    GENERAL,
-    NOTFOUND,
-    UNAUTHORIZED,
-    CRYPTO,
-    BACKOFF,
-    ;
+    return GENERAL_CODE;
   }
 }
