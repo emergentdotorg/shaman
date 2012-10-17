@@ -88,6 +88,26 @@ class Dbg {
     sm_logger.log(lr);
   }
 
+  /**
+   * Copy of {@code DalvikLogging.loggerNameToTag(String)}
+   */
+  private static String loggerNameToTag(String loggerName) {
+    // Anonymous logger.
+    if (loggerName == null) {
+      return "null";
+    }
+
+    int length = loggerName.length();
+    if (length <= 23) {
+      return loggerName;
+    }
+
+    int lastPeriod = loggerName.lastIndexOf(".");
+    return length - (lastPeriod + 1) <= 23
+        ? loggerName.substring(lastPeriod + 1)
+        : loggerName.substring(loggerName.length() - 23);
+  }
+
   public static class DebugLogRecord extends LogRecord {
 
     /**
