@@ -2,10 +2,12 @@ package org.emergent.android.weave.client;
 
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
+import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.ByteArrayInputStream;
 import java.security.*;
+import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateKey;
@@ -63,7 +65,7 @@ class WeaveCryptoUtil {
   }
 
   public X509Certificate readCertificate(byte[] certBytes) throws GeneralSecurityException {
-    CertificateFactory certFact = CertificateFactory.getInstance("X.509", PROVIDER_NAME);
+    CertificateFactory certFact = getCertificateFactoryInstance("X.509");
     return (X509Certificate)certFact.generateCertificate(new ByteArrayInputStream(certBytes));
   }
 
@@ -71,14 +73,14 @@ class WeaveCryptoUtil {
       throws GeneralSecurityException
   {
     Key key = getKeyDecryptionKey(encpass, Base64.decode(salt));
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
+    Cipher cipher = getCipherInstance("AES/CBC/PKCS5PADDING");
     cipher.init(Cipher.DECRYPT_MODE, key, new IvParameterSpec(Base64.decode(iv)));
     return cipher.doFinal(Base64.decode(keyData));
   }
 
   public RSAPrivateKey decodePrivateKeyFromPKCSBytes(byte[] keySpecBytes) throws GeneralSecurityException {
     KeySpec keySpec = new PKCS8EncodedKeySpec(keySpecBytes);
-    KeyFactory keyFact = KeyFactory.getInstance("RSA", PROVIDER_NAME);
+    KeyFactory keyFact = getKeyFactoryInstance("RSA");
     return (RSAPrivateKey)keyFact.generatePrivate(keySpec);
   }
 
@@ -86,7 +88,7 @@ class WeaveCryptoUtil {
 //    checkMac(secKey, ciphertext, hmac);
     byte[] ciphertextbytes = Base64.decode(ciphertext);
     byte[] ivBytes = Base64.decode(iv);
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
+    Cipher cipher = getCipherInstance("AES/CBC/PKCS5PADDING");
     cipher.init(Cipher.DECRYPT_MODE, secKey, new IvParameterSpec(ivBytes));
     return cipher.doFinal(ciphertextbytes);
   }
@@ -95,7 +97,7 @@ class WeaveCryptoUtil {
     checkMac(hmacKey, ciphertext, hmac);
     byte[] ciphertextbytes = Base64.decode(ciphertext);
     byte[] ivBytes = Base64.decode(iv);
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
+    Cipher cipher = getCipherInstance("AES/CBC/PKCS5PADDING");
     cipher.init(Cipher.DECRYPT_MODE, secKey, new IvParameterSpec(ivBytes));
 //    System.err.println("lengths : "  + " iv=" + ivBytes.length + " ivstr=" + iv.length() + " ; hmacstr=" + hmac.length());
     return WeaveUtil.toUtf8String(cipher.doFinal(ciphertextbytes));
@@ -105,7 +107,7 @@ class WeaveCryptoUtil {
 //    byte[] ivBytes = new byte[16];
 //    mSecureRandom.nextBytes(ivBytes);
     byte[] ivBytes = Base64.decode(iv);
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
+    Cipher cipher = getCipherInstance("AES/CBC/PKCS5PADDING");
     cipher.init(Cipher.ENCRYPT_MODE, secKey, new IvParameterSpec(ivBytes));
     byte[] plaintextbytes = WeaveUtil.toUtf8Bytes(plaintext);
     byte[] ciphertextbytes = cipher.doFinal(plaintextbytes);
@@ -114,7 +116,7 @@ class WeaveCryptoUtil {
 
   public Key unwrapSecretKey(RSAPrivateKey privKey, String wrapped) throws GeneralSecurityException {
     byte[] wrappedBytes = Base64.decode(wrapped);
-    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding", PROVIDER_NAME);
+    Cipher cipher = getCipherInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.UNWRAP_MODE, privKey);
     return cipher.unwrap(wrappedBytes, "AES", Cipher.SECRET_KEY);
   }
@@ -130,13 +132,13 @@ class WeaveCryptoUtil {
   }
 
   private byte[] encrypt(Key secKey, byte[] plaintext, String iv) throws GeneralSecurityException {
-    Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5PADDING", PROVIDER_NAME);
+    Cipher cipher = getCipherInstance("AES/CBC/PKCS5PADDING");
     cipher.init(Cipher.ENCRYPT_MODE, secKey, new IvParameterSpec(Base64.decode(iv)));
     return cipher.doFinal(plaintext);
   }
 
   String createMac(Key secKey, String ciphertext) throws GeneralSecurityException {
-    Mac mac = Mac.getInstance("HMACSHA256", PROVIDER_NAME);
+    Mac mac = getMacInstance("HMACSHA256");
 //    mac.init(new SecretKeySpec(Base64.encode(secKey.getEncoded()), "AES"));
     mac.init(secKey);
     byte[] hmacBytes = mac.doFinal(WeaveUtil.toAsciiBytes(ciphertext));
@@ -264,5 +266,25 @@ class WeaveCryptoUtil {
     buf[1] = (byte)(i >>> 16);
     buf[2] = (byte)(i >>> 8);
     buf[3] = (byte)i;
+  }
+
+  private static CertificateFactory getCertificateFactoryInstance(String algo) throws NoSuchProviderException, CertificateException {
+//    return CertificateFactory.getInstance(algo, PROVIDER_NAME);
+    return CertificateFactory.getInstance(algo);
+  }
+
+  private static KeyFactory getKeyFactoryInstance(String algo) throws NoSuchProviderException, NoSuchAlgorithmException {
+//    return KeyFactory.getInstance(algo, PROVIDER_NAME);
+    return KeyFactory.getInstance(algo);
+  }
+
+  private static Cipher getCipherInstance(String algo) throws NoSuchProviderException, NoSuchAlgorithmException, NoSuchPaddingException {
+//    return Cipher.getInstance(algo, PROVIDER_NAME);
+    return Cipher.getInstance(algo);
+  }
+
+  private static Mac getMacInstance(String algo) throws NoSuchProviderException, NoSuchAlgorithmException {
+//    return Mac.getInstance(algo, PROVIDER_NAME);
+    return Mac.getInstance(algo);
   }
 }
