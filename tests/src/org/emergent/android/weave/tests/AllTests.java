@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.emergent.android.weave.client.tests;
+package org.emergent.android.weave.tests;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import org.emergent.android.weave.client.UserWeaveTest;
 
 /**
  * A test suite containing all tests for my application.
@@ -29,7 +28,7 @@ public class AllTests extends TestSuite {
   public static Test suite() {
 //    return new android.test.suitebuilder.TestSuiteBuilder(AllTests.class).includeAllPackagesUnderHere().build();
     TestSuite retval = new TestSuite();
-    retval.addTestSuite(UserWeaveTest.class);
+//    retval.addTestSuite(UserWeaveTest.class);
     return retval;
   }
 }

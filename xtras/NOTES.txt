@@ -4,7 +4,7 @@ adb push xtras/weave.properties /sdcard/weave.properties
 
 ANT_OPTS="-Dbuild.sysclasspath=ignore"
 
-adb shell am instrument -w org.emergent.android.weave.client.tests/android.test.InstrumentationTestRunner
+adb shell am instrument -w org.emergent.android.weave.tests/android.test.InstrumentationTestRunner
 
 
 todo adjust permissions in manifest

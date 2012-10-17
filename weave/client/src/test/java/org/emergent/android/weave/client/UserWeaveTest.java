@@ -206,7 +206,7 @@ public class UserWeaveTest extends TestCase {
     URI uri = weave.buildSyncUriFromSubpath(nodePath + params.toQueryString());
     return weave.getWboCollection(uri);
   }
-  
+
 //  @Test
 //  public void testAuthentication() throws Exception {
 //    WeaveAccountInfo loginInfo = TestUtil.getTestLoginInfo();
