@@ -27,7 +27,7 @@ package org.emergent.android.weave.client;
  * @author Robert Kaye
  * @author Gordon Mohr
  */
-public class Base32 {
+class Base32 {
     private static final String base32Chars =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
     private static final int[] base32Lookup =

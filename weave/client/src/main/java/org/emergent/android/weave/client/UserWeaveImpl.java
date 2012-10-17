@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class UserWeaveImpl implements UserWeave {
+class UserWeaveImpl implements UserWeave {
 
   private final WeaveTransport m_transport;
   private final URI m_authUri;

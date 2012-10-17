@@ -1,15 +1,14 @@
 package org.emergent.android.weave.persistence;
 
+import org.emergent.android.weave.client.CollectionNode;
+import org.emergent.android.weave.client.WeaveBasicObject;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.net.Uri;
 import android.provider.BaseColumns;
-
-import org.emergent.android.weave.client.CollectionNode;
-import org.emergent.android.weave.client.WeaveBasicObject;
-import org.emergent.android.weave.client.WeaveUtil;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.Date;
 import java.util.List;
@@ -131,13 +130,28 @@ public class Weaves {
     }
 
     public Date getModifiedDate() throws JSONException {
-      return WeaveUtil.toModifiedTimeDate(getModified());
+      return toModifiedTimeDate(getModified());
     }
 
     public String getProperty(String key) throws JSONException {
       if (m_decryptedPayload.has(key))
         return m_decryptedPayload.getString(key);
       return null;
+    }
+
+    /**
+     * Inline of <code>WeaveUtil.toModifiedTimeDate(String)</code>
+     * @todo stop inline
+     */
+    private static Date toModifiedTimeDate(String modified) {
+      long now = System.currentTimeMillis();
+      try {
+        double modDouble = Double.parseDouble(modified) * 1000;
+        long mod = Math.round(modDouble);
+        return new Date(mod);
+      } catch (Exception e) {
+        return new Date(); // todo buggy ?
+      }
     }
   }
 }

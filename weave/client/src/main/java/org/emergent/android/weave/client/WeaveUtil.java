@@ -40,7 +40,7 @@ import java.util.Locale;
 /**
  * @author Patrick Woodworth
  */
-public class WeaveUtil {
+class WeaveUtil {
 
   private static final String JSON_STREAM_TYPE = "application/json";
   private static final String ENTITY_CHARSET_NAME = "UTF-8";
