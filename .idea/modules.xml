@@ -3,8 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/weave/client/client.iml" filepath="$PROJECT_DIR$/weave/client/client.iml" />
-      <module fileurl="file://$PROJECT_DIR$/mainapp/mainapp.iml" filepath="$PROJECT_DIR$/mainapp/mainapp.iml" />
-      <module fileurl="file://$PROJECT_DIR$/root.iml" filepath="$PROJECT_DIR$/root.iml" />
+      <module fileurl="file://$PROJECT_DIR$/shaman.iml" filepath="$PROJECT_DIR$/shaman.iml" />
       <module fileurl="file://$PROJECT_DIR$/tests/tests.iml" filepath="$PROJECT_DIR$/tests/tests.iml" />
     </modules>
   </component>

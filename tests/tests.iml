@@ -37,7 +37,7 @@
     </content>
     <orderEntry type="jdk" jdkName="Android 4.1 Platform" jdkType="Android SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="mainapp" scope="PROVIDED" />
+    <orderEntry type="module" module-name="shaman" scope="PROVIDED" />
   </component>
 </module>
 
