@@ -20,8 +20,11 @@ import javax.servlet.GenericServlet;
 import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringWriter;
+import java.io.Writer;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.Statement;
@@ -57,5 +60,66 @@ public class MiscUtil {
 //      writer.write("\n");
     }
     return writer.toString();
+  }
+
+  public static boolean isEmpty(String s) {
+    return (s == null || s.trim().length() == 0);
+  }
+
+  public static void close(InputStream closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(OutputStream closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Reader closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Writer closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Connection closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(Statement closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void close(ResultSet closeable) {
+    if (closeable != null) try {
+      closeable.close();
+    } catch (Exception ignored) {
+    }
+  }
+
+  public static void copy(InputStream is, OutputStream os) throws IOException {
+    byte buf[] = new byte[1024];
+    int letti;
+    while ((letti = is.read(buf)) > 0) {
+      os.write(buf, 0, letti);
+    }
   }
 }

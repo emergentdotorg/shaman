@@ -16,7 +16,6 @@
 
 package org.emergent.plumber;
 
-import org.emergent.android.weave.client.WeaveUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -25,7 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 
 /**
  * @author Patrick Woodworth
@@ -80,9 +83,9 @@ public class InfoServlet extends AbstractSyncServlet {
     } catch (JSONException e) {
       throw new SQLException(e);
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
-      WeaveUtil.close(conn);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
+      MiscUtil.close(conn);
     }
   }
 

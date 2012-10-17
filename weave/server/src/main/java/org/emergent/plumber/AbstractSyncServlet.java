@@ -16,9 +16,7 @@
 
 package org.emergent.plumber;
 
-import org.emergent.android.weave.client.WeaveUtil;
-
-import javax.servlet.*;
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -35,7 +33,7 @@ public abstract class AbstractSyncServlet extends AbstractBaseServlet {
     setReqAttribs(req, resp);
     String username = (String)req.getAttribute(ATTRIB_USERNAME_KEY);
     String colname = (String)req.getAttribute(ATTRIB_COLNAME_KEY);
-    if (WeaveUtil.isEmpty(username) || WeaveUtil.isEmpty(colname)) {
+    if (MiscUtil.isEmpty(username) || MiscUtil.isEmpty(colname)) {
       resp.sendError(HttpServletResponse.SC_NOT_FOUND);
     } else {
       super.service(req, resp);

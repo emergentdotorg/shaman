@@ -1,14 +1,17 @@
-<%@ page import="org.emergent.plumber.DbUtil" %>
-<%@ page import="java.util.Map" %>
-<%@ page import="java.io.IOException" %>
-<%@ page import="java.sql.*" %>
-<%@ page import="org.json.JSONObject" %>
-<%@ page import="org.json.JSONException" %>
-<%@ page import="org.emergent.plumber.MiscUtil" %>
-<%@ page import="java.util.List" %>
-<%@ page import="java.util.ArrayList" %>
 <%@ page import="org.emergent.plumber.Config" %>
-<%@ page import="org.emergent.android.weave.client.WeaveUtil" %>
+<%@ page import="org.emergent.plumber.DbUtil" %>
+<%@ page import="org.emergent.plumber.MiscUtil" %>
+<%@ page import="org.json.JSONException" %>
+<%@ page import="org.json.JSONObject" %>
+<%@ page import="java.io.IOException" %>
+<%@ page import="java.sql.Connection" %>
+<%@ page import="java.sql.DatabaseMetaData" %>
+<%@ page import="java.sql.ResultSet" %>
+<%@ page import="java.sql.ResultSetMetaData" %>
+<%@ page import="java.sql.SQLException" %>
+<%@ page import="java.sql.Statement" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.List" %>
 <%@page contentType="text/html" pageEncoding="UTF-8" language="java" %>
 <%
     if ("POST".equals(request.getMethod())) {
@@ -98,8 +101,8 @@ Posted: <%= request.getParameter("posted") %>
                 out.append("</tr>");
             }
         } finally {
-            WeaveUtil.close(rs);
-            WeaveUtil.close(st);
+            MiscUtil.close(rs);
+            MiscUtil.close(st);
             out.append("</table>");
         }
     }
@@ -117,7 +120,7 @@ Posted: <%= request.getParameter("posted") %>
                 String tablename = rs.getString("TABLE_NAME");
                 names.add(tablename);
             }
-            WeaveUtil.close(rs);
+            MiscUtil.close(rs);
             rs = null;
             for (String tablename : names) {
                 writeTable(out, conn, tablename);
@@ -125,8 +128,8 @@ Posted: <%= request.getParameter("posted") %>
         } catch (Exception e) {
             application.log(e.getMessage(), e);
         } finally {
-            WeaveUtil.close(rs);
-            WeaveUtil.close(conn);
+            MiscUtil.close(rs);
+            MiscUtil.close(conn);
         }
     }
 %>

@@ -16,8 +16,6 @@
 
 package org.emergent.plumber;
 
-import org.emergent.android.weave.client.WeaveUtil;
-
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
@@ -26,7 +24,13 @@ import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.sql.DataSource;
 import java.io.IOException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Enumeration;
 
 /**
@@ -70,7 +74,7 @@ public class Config implements ServletContextListener {
     } catch (Exception e) {
       mContext.log(e.getMessage(), e);
     } finally {
-      WeaveUtil.close(conn);
+      MiscUtil.close(conn);
     }
   }
 
@@ -101,8 +105,8 @@ public class Config implements ServletContextListener {
       st = conn.createStatement();
       DbUtil.runSqlScript("createdb.sql", st);
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
     }
   }
 
@@ -121,8 +125,8 @@ public class Config implements ServletContextListener {
       }
       return needInit;
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
     }
   }
 

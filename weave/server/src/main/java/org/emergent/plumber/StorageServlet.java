@@ -16,7 +16,6 @@
 
 package org.emergent.plumber;
 
-import org.emergent.android.weave.client.WeaveUtil;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +25,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 
 /**
@@ -73,8 +76,8 @@ public class StorageServlet extends AbstractSyncServlet {
     } catch (JSONException e) {
       log(e.getMessage(), e);
     } finally {
-      WeaveUtil.close(st);
-      WeaveUtil.close(dbCon);
+      MiscUtil.close(st);
+      MiscUtil.close(dbCon);
     }
 
     if (rspMsg != null) {
@@ -140,9 +143,9 @@ public class StorageServlet extends AbstractSyncServlet {
     String colname = (String)req.getAttribute(ATTRIB_COLNAME_KEY);
     String entryid = (String)req.getAttribute(ATTRIB_ENTRYID_KEY);
 
-    boolean singleton = !WeaveUtil.isEmpty(entryid);
+    boolean singleton = !MiscUtil.isEmpty(entryid);
     String idlist = req.getParameter("ids");
-    boolean deleteall = !singleton && WeaveUtil.isEmpty(idlist);
+    boolean deleteall = !singleton && MiscUtil.isEmpty(idlist);
 
     Connection conn = null;
     PreparedStatement st = null;
@@ -173,7 +176,7 @@ public class StorageServlet extends AbstractSyncServlet {
           String[] idarray = idlist.split(",");
           if (idarray != null) {
             for (String idval : idarray) {
-              if (!WeaveUtil.isEmpty(idval))
+              if (!MiscUtil.isEmpty(idval))
                 ids.add(idval);
             }
           }
@@ -194,9 +197,9 @@ public class StorageServlet extends AbstractSyncServlet {
     } catch (SQLException e) {
       log(e.getMessage(), e);
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
-      WeaveUtil.close(conn);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
+      MiscUtil.close(conn);
     }
 
     resp.setContentType("application/json");
@@ -210,7 +213,7 @@ public class StorageServlet extends AbstractSyncServlet {
     String colname = (String)req.getAttribute(ATTRIB_COLNAME_KEY);
     String entryid = (String)req.getAttribute(ATTRIB_ENTRYID_KEY);
 
-    boolean singleton = !WeaveUtil.isEmpty(entryid);
+    boolean singleton = !MiscUtil.isEmpty(entryid);
     String fullParmValue = req.getParameter("full");
     boolean fullrecords = singleton || "1".equals(fullParmValue);
 
@@ -260,9 +263,9 @@ public class StorageServlet extends AbstractSyncServlet {
     } catch (JSONException e) {
       throw new SQLException(e);
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
-      WeaveUtil.close(conn);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
+      MiscUtil.close(conn);
     }
   }
 
@@ -299,9 +302,9 @@ public class StorageServlet extends AbstractSyncServlet {
       int userId = DbUtil.getUserId(conn, username);
       int modCnt = updateWbo(conn, userId, colname, tsmillis, clientObj);
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
-      WeaveUtil.close(conn);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
+      MiscUtil.close(conn);
     }
   }
 
@@ -379,8 +382,8 @@ public class StorageServlet extends AbstractSyncServlet {
         retval = st.executeUpdate();
       }
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
     }
     return retval;
   }

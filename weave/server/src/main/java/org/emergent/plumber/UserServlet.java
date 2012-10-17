@@ -16,7 +16,6 @@
 
 package org.emergent.plumber;
 
-import org.emergent.android.weave.client.WeaveUtil;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -46,7 +45,7 @@ public class UserServlet extends AbstractBaseServlet {
       st.setString(3, email);
       retval = st.executeUpdate();
     } finally {
-      WeaveUtil.close(st);
+      MiscUtil.close(st);
     }
     return retval;
   }
@@ -88,9 +87,9 @@ public class UserServlet extends AbstractBaseServlet {
     } catch (SQLException e) {
       log(e.getMessage(), e);
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
-      WeaveUtil.close(dbCon);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
+      MiscUtil.close(dbCon);
     }
     resp.setContentType("text/html");
     resp.setCharacterEncoding("UTF-8");
@@ -154,8 +153,8 @@ public class UserServlet extends AbstractBaseServlet {
     } catch (SQLException e) {
       log(e.getMessage(), e);
     } finally {
-      WeaveUtil.close(st);
-      WeaveUtil.close(dbCon);
+      MiscUtil.close(st);
+      MiscUtil.close(dbCon);
     }
     if (success) {
       String weaveTimestamp = String.format("%.2f", System.currentTimeMillis() / 1000.0);

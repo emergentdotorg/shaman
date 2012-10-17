@@ -16,13 +16,20 @@
 
 package org.emergent.plumber;
 
-import org.emergent.android.weave.client.WeaveUtil;
 import org.emergent.plumber.util.DerbyUtil;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import java.io.*;
-import java.sql.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +50,7 @@ public class DbUtil {
     } catch (IOException e) {
       throw new ServletException(e);
     } finally {
-      WeaveUtil.close(conn);
+      MiscUtil.close(conn);
     }
   }
 
@@ -59,8 +66,8 @@ public class DbUtil {
         retval = rs.getInt(1);
       }
     } finally {
-      WeaveUtil.close(rs);
-      WeaveUtil.close(st);
+      MiscUtil.close(rs);
+      MiscUtil.close(st);
     }
     return retval;
   }
@@ -71,7 +78,7 @@ public class DbUtil {
       in = new BufferedReader(new InputStreamReader(DbUtil.class.getResourceAsStream(scriptName)));
       runSqlScript(in, st);
     } finally {
-      WeaveUtil.close(in);
+      MiscUtil.close(in);
     }
   }
 
@@ -115,8 +122,8 @@ public class DbUtil {
     } catch (IOException e) {
       throw new ServletException(e);
     } finally {
-      WeaveUtil.close(st);
-      WeaveUtil.close(conn);
+      MiscUtil.close(st);
+      MiscUtil.close(conn);
     }
   }
 
@@ -130,9 +137,5 @@ public class DbUtil {
 //      log(String.format("column (%d) : %s", ii+1, colname));
     }
     return retval;
-  }
-
-  private static String createEntryId() {
-    return WeaveUtil.createEntryId();
   }
 }
