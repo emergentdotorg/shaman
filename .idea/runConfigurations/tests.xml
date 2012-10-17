@@ -4,7 +4,7 @@
     <option name="TESTING_TYPE" value="0" />
     <option name="INSTRUMENTATION_RUNNER_CLASS" value="" />
     <option name="METHOD_NAME" value="" />
-    <option name="CLASS_NAME" value="org.emergent.android.weave.client.tests.UserWeaveTest" />
+    <option name="CLASS_NAME" value="org.emergent.android.weave.client.UserWeaveTest" />
     <option name="PACKAGE_NAME" value="" />
     <option name="TARGET_SELECTION_MODE" value="EMULATOR" />
     <option name="PREFERRED_AVD" value="" />

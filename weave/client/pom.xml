@@ -63,7 +63,7 @@
           <archive>
             <manifest>
               <addClasspath>true</addClasspath>
-              <mainClass>org.emergent.weave.client.WeaveMain</mainClass>
+              <mainClass>org.emergent.android.weave.client.WeaveMain</mainClass>
             </manifest>
           </archive>
         </configuration>

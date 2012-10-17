@@ -12,7 +12,7 @@
     </application>
     <!--
     This declares that this application uses the instrumentation test runner targeting
-    the package of org.emergent.android.weave.client.  To run the tests use the command:
+    the package of org.emergent.android.weave.tests.  To run the tests use the command:
     "adb shell am instrument -w org.emergent.android.weave.tests/android.test.InstrumentationTestRunner"
     -->
     <instrumentation android:name="android.test.InstrumentationTestRunner"
